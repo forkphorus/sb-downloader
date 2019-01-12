@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      font-family: sans-serif;
+      width: 480px;
+      margin: 24px auto;
+    }
+    h1 {
+      font-weight: normal;
+      font-size: 54px;
+      line-height: 72px;
+      margin: 0;
+    }
+
+    #project-select {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      font-size: 23px;
+      line-height: 32px;
+    }
+    #project-select-input {
+      font-size: inherit;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      width: 50px;
+      flex-grow: 1;
+      text-align: center;
+    }
+    input[disabled] {
+      background-color: inherit;
+      color: #333;
+    }
+
+    #type-select {
+      display: block;
+      width: 100%;
+      text-align: right;
+    }
+    #type-select-input {
+      border: 1px solid transparent;
+    }
+    #type-select-input:hover {
+      border: 1px solid #777;
+    }
+    #type-select-input:active {
+      border: 1px solid #333;
+    }
+
+    #progress-bar {
+      position: relative;
+      width: 100%;
+      height: 35px;
+      margin-top: 10px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    #progress-bar-fill {
+      position: absolute;
+      height: 100%;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      background-color: #cde;
+      transition: background-color 0.3s, width 0.3s;
+    }
+    #progress-bar-fill.error {
+      background-color: #eaa;
+    }
+    #progress-bar-text {
+      position: absolute;
+      top: 50%;
+      left: 5px;
+      transform: translateY(-50%);
+      z-index: 10;
+    }
+
+    code {
+      font: 12px Menlo, Monaco, Consolas, Courier New, monospace;
+      background: #f5f5f5;
+      border-radius: 3px;
+      padding: 3px;
+      color: #000;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>.sb downloader</h1>
+  <p>sb downloader downloads Scratch projects as <code>.sb2</code> or <code>.sb3</code> files. (even unshared projects) Choose the format you want the project in then enter its ID. Not all formats are available for all projects.</p>
+
+  <label id="project-select">
+    <span class="project-select-part">https://scratch.mit.edu/projects/</span>
+    <input id="project-select-input" placeholder="116491454" autocomplete="off">
+    <span class="project-select-part">/</span>
+  </label>
+
+  <label id="type-select">
+    Download project as
+    <select id="type-select-input">
+      <option value="sb2">.sb2</option>
+      <option value="sb3">.sb3</option>
+    </select>
+  </label>
+
+  <div id="progress-bar">
+    <div id="progress-bar-fill"></div>
+    <div id="progress-bar-text">Loading...</div>
+  </div>
+
+  <script src="jszip.min.js"></script>
+  <script src="loader.js"></script>
+  <script>
+    (function() {
+      'use strict';
+
+      const projectInput = document.querySelector('#project-select-input');
+      const projectInputContainer = document.querySelector('#project-select');
+      const typeInput = document.querySelector('#type-select-input');
+
+      const progressBarFill = document.querySelector('#progress-bar-fill');
+      const progressBarText = document.querySelector('#progress-bar-text');
+      const progressBarContainer = document.querySelector('#progress-bar');
+
+      // Project ID Input
+      let projectInputTimeout;
+      function queueLoad() {
+        if (projectInputTimeout) {
+          clearTimeout(projectInputTimeout);
+        }
+        projectInputTimeout = setTimeout(function() {
+          loadInput();
+        }, 500);
+      }
+      projectInput.addEventListener('input', function() {
+        queueLoad();
+      });
+
+      // Type input
+      typeInput.addEventListener('change', function() {
+        queueLoad();
+      });
+
+      // Progress bar
+      let finishedTasks = 0;
+      let totalTasks = 0;
+      loader.progressHooks.start = function() {
+        finishedTasks = 0;
+        totalTasks = 0;
+      };
+      loader.progressHooks.newTask = function() {
+        totalTasks++;
+        setProgress(finishedTasks / totalTasks, 'Downloading project files (' + finishedTasks + '/' + totalTasks + ')');
+      };
+      loader.progressHooks.finishTask = function() {
+        finishedTasks++;
+        setProgress(finishedTasks / totalTasks, 'Downloading project files (' + finishedTasks + '/' + totalTasks + ')');
+      };
+      function setProgress(progress, message) {
+        progressBarFill.style.width = (10 + progress * 90) + '%';
+        if (message !== undefined) {
+          progressBarText.textContent = message;
+        }
+      }
+      function showProgress() {
+        progressBarContainer.style.opacity = '1';
+        progressBarFill.classList.remove('error');
+        setProgress(0, '');
+      }
+      function hideProgress() {
+        progressBarContainer.style.opacity = '0';
+      }
+      function showError(error) {
+        setProgress(1, error || 'An error occurred.');
+        progressBarFill.classList.add('error');
+      }
+
+      // Project loading methods
+
+      function loadInput() {
+        const id = projectInput.value;
+        const type = typeInput.value;
+
+        if (id.trim() === '') {
+          return;
+        }
+
+        showProgress();
+
+        downloadProject(id, type)
+          .then(() => {
+            hideProgress();
+          })
+          .catch((err) => {
+            console.error(err);
+            showError('Project is not available as a .' + type);
+          });
+      }
+
+      function downloadProject(id, type) {
+        return loader.loadProject(id, type)
+          .then((link) => {
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          });
+      }
+    }());
+  </script>
+</body>
+
+</html>
