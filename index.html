@@ -116,6 +116,35 @@
     (function() {
       'use strict';
 
+      // https://stackoverflow.com/a/13419367
+      function getQuery(queryString) {
+        const query = {};
+        const pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
+        for (var i = 0; i < pairs.length; i++) {
+          const pair = pairs[i].split('=');
+          const key = decodeURIComponent(pair[0]);
+          const value = decodeURIComponent(pair[1] || '');
+          if (key && value) {
+            query[key] = value;
+          }
+        }
+        return query;
+      }
+
+      function setQuery(key, value) {
+        const query = getQuery(window.location.search);
+        query[key] = value;
+        let url = '?';
+        for (const key of Object.keys(query)) {
+          if (url.length > 1) {
+            url += '&';
+          }
+          url += encodeURIComponent(key) + '=' + encodeURIComponent(query[key]);
+        }
+        console.log(query);
+        history.replaceState({}, '', url);
+      }
+
       const projectInput = document.querySelector('#project-select-input');
       const projectInputContainer = document.querySelector('#project-select');
       const typeInput = document.querySelector('#type-select-input');
@@ -177,6 +206,17 @@
         progressBarFill.classList.add('error');
       }
 
+      const searchQuery = getQuery(window.location.search);
+      if (searchQuery.id) {
+        projectInput.value = searchQuery.id;
+      }
+      if (searchQuery.type) {
+        typeInput.value = searchQuery.type;
+      }
+      if (searchQuery.id && searchQuery.type) {
+        loadInput();
+      }
+
       // Project loading methods
 
       function loadInput() {
@@ -186,6 +226,9 @@
         if (id.trim() === '') {
           return;
         }
+
+        setQuery('id', id);
+        setQuery('type', type);
 
         showProgress();
 
