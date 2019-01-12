@@ -110,7 +110,10 @@ window.loader = (function() {
       const data = file.data;
       zip.file(path, data);
     }
-    return zip.generateAsync({type: 'blob'});
+    return zip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+    });
   }
 
   // Loads a project, automatically choses the loader
