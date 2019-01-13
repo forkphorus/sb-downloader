@@ -92,7 +92,7 @@
     }
 
     code {
-      font: 12px Menlo, Monaco, Consolas, Courier New, monospace;
+      font-family: Menlo, Monaco, Consolas, Courier New, monospace;
       background: #f5f5f5;
       border-radius: 3px;
       padding: 3px;
@@ -102,8 +102,8 @@
 </head>
 
 <body>
-  <h1>.sb downloader</h1>
-  <p>sb downloader downloads Scratch projects as <code>.sb2</code> or <code>.sb3</code> files. (even unshared projects) Enter the project ID then choose the format. Not all formats are available for all projects. <code>.sb2</code> files may be outdated if changes were made since Scratch 3 launched.</p>
+  <h1><code>.sb</code> downloader</h1>
+  <p><code>.sb</code> downloader downloads Scratch projects, even unshared ones. Enter the project ID then choose the format.</p>
 
   <label id="project-select">
     <span class="project-select-part">https://scratch.mit.edu/projects/</span>
@@ -155,7 +155,6 @@
       const progressBarText = document.querySelector('#progress-bar-text');
       const progressBarContainer = document.querySelector('#progress-bar');
       const assetTable = document.querySelector('#asset-list');
-      const displayAssetsButton = document.querySelector('#display-assets');
 
       // Returns an object containing all the query string parameters
       // https://stackoverflow.com/a/13419367
@@ -257,9 +256,6 @@
       }
 
       // Asset listing
-      displayAssetsButton.addEventListener('click', function() {
-
-      })
 
       // Displays a list of files
       function displayAssets(files) {
