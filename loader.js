@@ -38,6 +38,23 @@ window.loader = (function() {
         });
     }
 
+    // Removes assets with the same ID
+    function dedupeAssets(assets) {
+      const result = [];
+      const knownIds = new Set();
+
+      for (const i of assets) {
+        const id = i.assetId;
+        if (knownIds.has(id)) {
+          continue;
+        }
+        knownIds.add(id);
+        result.push(i);
+      }
+
+      return result;
+    }
+
     progressHooks.start();
     progressHooks.newTask();
 
@@ -49,7 +66,7 @@ window.loader = (function() {
         const targets = projectData.targets;
         const costumes = [].concat.apply([], targets.map((t) => t.costumes || []));
         const sounds = [].concat.apply([], targets.map((t) => t.sounds || []));
-        const assets = [].concat.apply([], [costumes, sounds]);
+        const assets = dedupeAssets([].concat.apply([], [costumes, sounds]));
 
         return Promise.all(assets.map((a) => addFile(a)));
       })
@@ -76,9 +93,23 @@ window.loader = (function() {
       return fetch(ASSETS_API.replace('$path', path))
         .then((request) => request.arrayBuffer())
         .then((buffer) => {
-          result.files.push({path: data.md5ext, data: buffer})
+          result.files.push({path: path, data: buffer})
           progressHooks.finishTask();
         });
+    }
+
+    function dedupeAssets(assets) {
+      const result = [];
+      const seen = new Set();
+      for (const i of assets) {
+        const id = i.md5 || i.baseLayerMD5;
+        if (seen.has(id)) {
+          continue;
+        }
+        seen.add(id);
+        result.push(i);
+      }
+      return result;
     }
 
     progressHooks.start();
@@ -92,7 +123,7 @@ window.loader = (function() {
         const children = projectData.children.filter((c) => !c.listName && !c.target);
         const costumes = [].concat.apply([], children.map((c) => c.costumes || []));
         const sounds = [].concat.apply([], children.map((c) => c.sounds || []));
-        const assets = [].concat.apply([], [costumes, sounds]);
+        const assets = dedupeAssets([].concat.apply([], [costumes, sounds]));
 
         return Promise.all(assets.map((a) => addFile(a)));
       })
@@ -127,18 +158,7 @@ window.loader = (function() {
     if (!(type in loaders)) {
       return Promise.reject('Unknown type');
     }
-    return loaders[type](id)
-      .then((r) => {
-        result = r;
-        return createArchive(r.files)
-      })
-      .then((blob) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = result.title + '.sb3';
-        return a;
-      });
+    return loaders[type](id);
   }
 
   return {

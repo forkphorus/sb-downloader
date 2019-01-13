@@ -66,8 +66,11 @@
       background-color: #cde;
       transition: background-color 0.3s, width 0.3s;
     }
-    #progress-bar-fill.error {
+    #progress-bar-fill[state=error] {
       background-color: #eaa;
+    }
+    #progress-bar-fill[state=success] {
+      background-color: #aea;
     }
     #progress-bar-text {
       position: absolute;
@@ -75,6 +78,17 @@
       left: 5px;
       transform: translateY(-50%);
       z-index: 10;
+    }
+
+    #asset-list-container {
+      display: none;
+    }
+    #asset-list .name {
+      font-size: 10px;
+    }
+    #asset-list .preview {
+      width: 100%;
+      height: 100%;
     }
 
     code {
@@ -89,7 +103,7 @@
 
 <body>
   <h1>.sb downloader</h1>
-  <p>sb downloader downloads Scratch projects as <code>.sb2</code> or <code>.sb3</code> files. (even unshared projects) Choose the format you want then enter a project ID. Not all formats are available for all projects. <code>.sb2</code> files may be outdated if changes were made since Scratch 3 launched.</p>
+  <p>sb downloader downloads Scratch projects as <code>.sb2</code> or <code>.sb3</code> files. (even unshared projects) Enter the project ID then choose the format. Not all formats are available for all projects. <code>.sb2</code> files may be outdated if changes were made since Scratch 3 launched.</p>
 
   <label id="project-select">
     <span class="project-select-part">https://scratch.mit.edu/projects/</span>
@@ -99,15 +113,31 @@
 
   <label id="type-select">
     Download project as
-    <select id="type-select-input">
+    <select id="type-select-input" autocomplete="off">
+      <option value="" selected disabled>select</option>
       <option value="sb2">.sb2</option>
-      <option value="sb3" selected>.sb3</option>
+      <option value="sb3">.sb3</option>
     </select>
   </label>
 
   <div id="progress-bar">
     <div id="progress-bar-fill"></div>
-    <div id="progress-bar-text">Loading...</div>
+    <div id="progress-bar-text"></div>
+  </div>
+
+  <div id="asset-list-container">
+    <a id="display-assets">Click to display assets</a>
+    <table width="100%">
+      <thead>
+        <tr>
+          <th width="50%">Path</th>
+          <th width="50%">Preview</th>
+        </tr>
+      </thead>
+      <tbody id="asset-list">
+
+      </tbody>
+    </table>
   </div>
 
   <script src="jszip.min.js"></script>
@@ -116,6 +146,18 @@
     (function() {
       'use strict';
 
+      // Element references
+
+      const projectInput = document.querySelector('#project-select-input');
+      const projectInputContainer = document.querySelector('#project-select');
+      const typeInput = document.querySelector('#type-select-input');
+      const progressBarFill = document.querySelector('#progress-bar-fill');
+      const progressBarText = document.querySelector('#progress-bar-text');
+      const progressBarContainer = document.querySelector('#progress-bar');
+      const assetTable = document.querySelector('#asset-list');
+      const displayAssetsButton = document.querySelector('#display-assets');
+
+      // Returns an object containing all the query string parameters
       // https://stackoverflow.com/a/13419367
       function getQuery(queryString) {
         const query = {};
@@ -131,6 +173,7 @@
         return query;
       }
 
+      // Sets a query string value without reloading the page.
       function setQuery(key, value) {
         const query = getQuery(window.location.search);
         query[key] = value;
@@ -141,38 +184,53 @@
           }
           url += encodeURIComponent(key) + '=' + encodeURIComponent(query[key]);
         }
-        console.log(query);
         history.replaceState({}, '', url);
       }
 
-      const projectInput = document.querySelector('#project-select-input');
-      const projectInputContainer = document.querySelector('#project-select');
-      const typeInput = document.querySelector('#type-select-input');
-
-      const progressBarFill = document.querySelector('#progress-bar-fill');
-      const progressBarText = document.querySelector('#progress-bar-text');
-      const progressBarContainer = document.querySelector('#progress-bar');
-
-      // Project ID Input
-      let projectInputTimeout;
-      function queueLoad() {
-        if (projectInputTimeout) {
-          clearTimeout(projectInputTimeout);
-        }
-        projectInputTimeout = setTimeout(function() {
-          loadInput();
-        }, 500);
-      }
+      // Project ID input
+      let inputTimeout;
       projectInput.addEventListener('input', function() {
-        queueLoad();
+        if (inputTimeout) {
+          clearTimeout(inputTimeout);
+        }
+        if (typeInput.value) {
+          inputTimeout = setTimeout(function() {
+            loadInput();
+          }, 500);
+        }
       });
 
       // Type input
       typeInput.addEventListener('change', function() {
-        queueLoad();
+        loadInput();
       });
 
-      // Progress bar
+      // Progress bar methods
+
+      // Sets the current progress. Expects a number between 0 and 1
+      function setProgress(progress) {
+        progressBarFill.style.width = ( 10 + progress * 90) + '%';
+      }
+      // Resets the progress bar
+      function resetProgress() {
+        setProgress(0);
+        setProgressState('Loading...', '');
+      }
+      // Shows the progress bar
+      function showProgress() {
+        progressBarContainer.style.opacity = '1';
+      }
+      // Hides the progress bar
+      function hideProgress() {
+        progressBarContainer.style.opacity = '0';
+      }
+      // Sets the text and 'state' of the progress bar (usually changes color)
+      function setProgressState(message, state) {
+        progressBarText.textContent = message;
+        progressBarFill.setAttribute('state', state || '');
+      }
+
+      // Install progress hooks
       let finishedTasks = 0;
       let totalTasks = 0;
       loader.progressHooks.start = function() {
@@ -181,44 +239,98 @@
       };
       loader.progressHooks.newTask = function() {
         totalTasks++;
-        setProgress(finishedTasks / totalTasks, 'Downloading project files (' + finishedTasks + '/' + totalTasks + ')');
+        setProgress(finishedTasks / totalTasks);
+        setProgressState('Downloading project files (' + finishedTasks + '/' + totalTasks + ')');
       };
       loader.progressHooks.finishTask = function() {
         finishedTasks++;
-        setProgress(finishedTasks / totalTasks, 'Downloading project files (' + finishedTasks + '/' + totalTasks + ')');
+        setProgress(finishedTasks / totalTasks);
+        setProgressState('Downloading project files (' + finishedTasks + '/' + totalTasks + ')');
       };
-      function setProgress(progress, message) {
-        progressBarFill.style.width = (10 + progress * 90) + '%';
-        if (message !== undefined) {
-          progressBarText.textContent = message;
-        }
-      }
-      function showProgress() {
-        progressBarContainer.style.opacity = '1';
-        progressBarFill.classList.remove('error');
-        setProgress(0, '');
-      }
-      function hideProgress() {
-        progressBarContainer.style.opacity = '0';
-      }
-      function showError(error) {
-        setProgress(1, error || 'An error occurred.');
-        progressBarFill.classList.add('error');
-      }
 
+      // Load URL paramaters
       const searchQuery = getQuery(window.location.search);
-      if (searchQuery.id) {
-        projectInput.value = searchQuery.id;
-      }
-      if (searchQuery.type) {
-        typeInput.value = searchQuery.type;
-      }
       if (searchQuery.id && searchQuery.type) {
+        projectInput.value = searchQuery.id;
+        typeInput.value = searchQuery.type;
         loadInput();
       }
 
-      // Project loading methods
+      // Asset listing
+      displayAssetsButton.addEventListener('click', function() {
 
+      })
+
+      // Displays a list of files
+      function displayAssets(files) {
+        while (assetTable.firstChild) {
+          assetTable.removeChild(assetTable.firstChild);
+        }
+
+        function getPreview(file) {
+          const path = file.path;
+          const extension = path.split('.').pop();
+
+          const IMAGE_EXTENSIONS = ['png', 'svg'];
+          const AUDIO_EXTENSIONS = ['mp3', 'wav'];
+          const TEXT_EXTENSIONS = ['json'];
+
+          function cannotPreview() {
+            const text = document.createElement('i');
+            text.textContent = 'cannot preview';
+            return text;
+          }
+
+          if (IMAGE_EXTENSIONS.includes(extension)) {
+            if (!(file.data instanceof ArrayBuffer)) {
+              return cannotPreview();
+            }
+            const blob = new Blob([file.data]);
+            const url = URL.createObjectURL(blob);
+            const img = document.createElement('img');
+            img.src = url;
+            return img;
+          } else if (AUDIO_EXTENSIONS.includes(extension)) {
+            if (!(file.data instanceof ArrayBuffer)) {
+              return cannotPreview();
+            }
+            const blob = new Blob([file.data]);
+            const url = URL.createObjectURL(blob);
+            const audio = document.createElement('audio');
+            audio.src = url;
+            audio.controls = true;
+            return audio;
+          } else if (TEXT_EXTENSIONS.includes(extension)) {
+            const textarea = document.createElement('textarea');
+            textarea.readonly = true;
+            textarea.textContent = file.data;
+            return textarea;
+          }
+          return cannotPreview();
+        }
+
+        for (const file of files) {
+          const row = document.createElement('tr');
+
+          const nameCell = document.createElement('td');
+          const previewCell = document.createElement('td');
+
+          nameCell.classList.add('name');
+          nameCell.appendChild(document.createTextNode(file.path));
+
+          previewCell.classList.add('preview');
+          previewCell.appendChild(getPreview(file));
+
+          row.appendChild(nameCell);
+          row.appendChild(previewCell);
+
+          assetTable.appendChild(row);
+        }
+      }
+
+      // Project loading and downloading
+
+      // Loads the currently input project
       function loadInput() {
         const id = projectInput.value;
         const type = typeInput.value;
@@ -230,24 +342,43 @@
         setQuery('id', id);
         setQuery('type', type);
 
+        resetProgress();
         showProgress();
 
         downloadProject(id, type)
           .then(() => {
-            hideProgress();
+            setProgressState('Complete', 'success');
+            setProgress(1);
           })
           .catch((err) => {
             console.error(err);
-            showError('Project is not available as a .' + type);
+            setProgressState('Project is not available as a .' + type, 'error');
+            setProgress(1);
           });
       }
 
+      // Starts loading a project. Downloads it when complete.
       function downloadProject(id, type) {
+        let result;
         return loader.loadProject(id, type)
-          .then((link) => {
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+          .then((r) => {
+            result = r;
+            // Archive the project
+            return loader.createArchive(r.files)
+          })
+          .then((blob) => {
+            // TODO: finish asset previewing
+            if (false) {
+              displayAssets(result.files);
+            }
+            // Create a download link and automatically click it
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = result.title + '.' + result.extension;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
           });
       }
     }());
