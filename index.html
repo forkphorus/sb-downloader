@@ -157,6 +157,7 @@
       const progressBarFill = document.querySelector('#progress-bar-fill');
       const progressBarText = document.querySelector('#progress-bar-text');
       const progressBarContainer = document.querySelector('#progress-bar');
+      const assetTableContainer = document.querySelector('#asset-list-container');
       const assetTable = document.querySelector('#asset-list');
 
       // Returns an object containing all the query string parameters
@@ -262,6 +263,8 @@
 
       // Displays a list of files
       function displayAssets(files) {
+        assetTableContainer.style.display = 'initial';
+
         while (assetTable.firstChild) {
           assetTable.removeChild(assetTable.firstChild);
         }
@@ -362,6 +365,7 @@
         return loader.loadProject(id, type)
           .then((r) => {
             result = r;
+            setProgressState('Saving project');
             // Archive the project
             return loader.createArchive(r.files)
           })
