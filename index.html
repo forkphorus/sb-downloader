@@ -364,7 +364,7 @@
           })
           .then((blob) => {
             // TODO: finish asset previewing
-            if (false) {
+            if (getQuery(window.location.search).assets) {
               displayAssets(result.files);
             }
             // Create a download link and automatically click it
