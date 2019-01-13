@@ -164,7 +164,7 @@ window.loader = (function() {
       })
       .then(() => {
         // We must add the project JSON at the end because it may have been changed during the loading.
-        result.files.push({path: 'project.json', data: JSON.stringify(scratchProjectData)});
+        result.files.push({path: 'project.json', data: JSON.stringify(projectData)});
         progressHooks.finishTask();
         return result;
       });
