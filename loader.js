@@ -190,7 +190,6 @@ window.loader = (function() {
       "sb2": loader.loadScratch2Project,
       "sb3": loader.loadScratch3Project,
     };
-    let result = null;
     type = type.toString();
     if (!(type in loaders)) {
       return Promise.reject('Unknown type');
