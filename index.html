@@ -15,6 +15,10 @@
       margin: 0;
     }
 
+    .hidden {
+      display: none;
+    }
+
     #project-select {
       display: flex;
       flex-direction: row;
@@ -80,15 +84,11 @@
       z-index: 10;
     }
 
-    #asset-list-container {
-      display: none;
-    }
     #asset-list .name {
       font-size: 10px;
     }
-    #asset-list .preview {
-      width: 100%;
-      height: 100%;
+    #asset-list .preview > * {
+      max-width: 360px;
     }
 
     code {
@@ -106,7 +106,7 @@
 
 <body>
   <h1><code>.sb</code> downloader</h1>
-  <p><code>.sb</code> downloader downloads Scratch projects, even unshared ones. Enter the project ID then choose the format.</p>
+  <p><code>.sb</code> downloader downloads Scratch 1, 2, or 3 projects, even unshared ones. Enter the project ID then choose the format.</p>
 
   <label id="project-select">
     <span class="project-select-part">https://scratch.mit.edu/projects/</span>
@@ -118,6 +118,7 @@
     Download project as
     <select id="type-select-input" autocomplete="off">
       <option value="" selected disabled>select</option>
+      <option value="sb">.sb</option>
       <option value="sb2">.sb2</option>
       <option value="sb3">.sb3</option>
     </select>
@@ -128,8 +129,7 @@
     <div id="progress-bar-text"></div>
   </div>
 
-  <div id="asset-list-container">
-    <a id="display-assets">Click to display assets</a>
+  <div id="asset-list-container" class="hidden">
     <table width="100%">
       <thead>
         <tr>
@@ -138,7 +138,7 @@
         </tr>
       </thead>
       <tbody id="asset-list">
-
+        <!-- javascript will insert the assets here -->
       </tbody>
     </table>
   </div>
@@ -161,8 +161,8 @@
       const assetTable = document.querySelector('#asset-list');
 
       // Returns an object containing all the query string parameters
-      // https://stackoverflow.com/a/13419367
       function getQuery(queryString) {
+        queryString = queryString || window.location.search;
         const query = {};
         const pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
         for (var i = 0; i < pairs.length; i++) {
@@ -178,7 +178,7 @@
 
       // Sets a query string value without reloading the page.
       function setQuery(key, value) {
-        const query = getQuery(window.location.search);
+        const query = getQuery();
         query[key] = value;
         let url = '?';
         for (const key of Object.keys(query)) {
@@ -252,28 +252,46 @@
       };
 
       // Load URL paramaters
-      const searchQuery = getQuery(window.location.search);
-      if (searchQuery.id && searchQuery.type) {
+
+      const searchQuery = getQuery();
+      if (searchQuery.id) {
         projectInput.value = searchQuery.id;
+      }
+      if (searchQuery.type) {
         typeInput.value = searchQuery.type;
+      }
+      if (searchQuery.id && searchQuery.type) {
         loadInput();
+      }
+
+      if (searchQuery.assets) {
+        assetTableContainer.classList.remove('hidden');
       }
 
       // Asset listing
 
       // Displays a list of files
       function displayAssets(files) {
-        assetTableContainer.style.display = 'initial';
+        if (assetTableContainer.classList.contains('hidden')) {
+          return;
+        }
 
         while (assetTable.firstChild) {
           assetTable.removeChild(assetTable.firstChild);
         }
 
+        function bufferToString(buffer) {
+          return decoder.decode(new Uint8Array(buffer));
+        }
+        
+        const decoder = new TextDecoder('utf8');
+
         function getPreview(file) {
           const path = file.path;
           const extension = path.split('.').pop();
 
-          const IMAGE_EXTENSIONS = ['png', 'svg'];
+          const IMAGE_EXTENSIONS = ['png'];
+          const SVG_EXTENSIONS = ['svg'];
           const AUDIO_EXTENSIONS = ['mp3', 'wav'];
           const TEXT_EXTENSIONS = ['json'];
 
@@ -287,27 +305,44 @@
             if (!(file.data instanceof ArrayBuffer)) {
               return cannotPreview();
             }
+
             const blob = new Blob([file.data]);
             const url = URL.createObjectURL(blob);
             const img = document.createElement('img');
             img.src = url;
             return img;
+          } else if (SVG_EXTENSIONS.includes(extension)) {
+            if (!(file.data instanceof ArrayBuffer)) {
+              return cannotPreview();
+            }
+
+            const image = document.createElement('img');
+            const source = bufferToString(file.data);
+            try {
+              image.src = 'data:image/svg+xml;base64,' + btoa(source);
+            } catch (e) {
+              return cannotPreview();
+            }
+            return image;
           } else if (AUDIO_EXTENSIONS.includes(extension)) {
             if (!(file.data instanceof ArrayBuffer)) {
               return cannotPreview();
             }
+
             const blob = new Blob([file.data]);
             const url = URL.createObjectURL(blob);
             const audio = document.createElement('audio');
             audio.src = url;
             audio.controls = true;
+            audio.autoplay = false;
             return audio;
           } else if (TEXT_EXTENSIONS.includes(extension)) {
             const textarea = document.createElement('textarea');
-            textarea.readonly = true;
+            textarea.readOnly = true;
             textarea.textContent = file.data;
             return textarea;
           }
+
           return cannotPreview();
         }
 
@@ -365,13 +400,17 @@
         return loader.loadProject(id, type)
           .then((r) => {
             result = r;
-            setProgressState('Saving project');
-            // Archive the project
-            return loader.createArchive(r.files)
+            setProgressState('Saving project...');
+            // The project could either be a zip archive (in which case we receive a list of files)
+            // or it could be a fully parsed arraybuffer
+            if (r.type === 'zip') {
+              return loader.createArchive(r.files)
+            } else if (r.type === 'buffer') {
+              return new Blob([r.buffer]);
+            }
           })
           .then((blob) => {
-            // TODO: finish asset previewing
-            if (getQuery(window.location.search).assets) {
+            if (result.files) {
               displayAssets(result.files);
             }
             // Create a download link and automatically click it

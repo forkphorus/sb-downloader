@@ -1,7 +1,8 @@
 'use strict';
 
 // The loader module of the project.
-// Implements all loading and archiving logic. Does not implement UI stuff.
+// Implements all loading and archiving logic.
+// No UI logic is implemented here, but hooks allow adding UI logic.
 
 window.loader = (function() {
   'use strict';
@@ -15,6 +16,24 @@ window.loader = (function() {
     // Indicates a task has finished
     finishTask() {},
   };
+  
+  function loadScratch1Project(id) {
+    const PROJECTS_API = 'https://projects.scratch.mit.edu/$id';
+    
+    const result = {
+      title: id.toString(),
+      extension: 'sb',
+      type: 'buffer',
+      buffer: null,
+    };
+    
+    return fetch(PROJECTS_API.replace('$id', id))
+      .then((data) => data.arrayBuffer())
+      .then((buffer) => {
+        result.buffer = buffer;
+        return result;
+      });
+  }
 
   // Loads a scratch 3 project
   function loadScratch3Project(id) {
@@ -25,6 +44,7 @@ window.loader = (function() {
       title: id.toString(),
       extension: 'sb3',
       files: [],
+      type: 'zip',
     };
 
     function addFile(data) {
@@ -96,6 +116,7 @@ window.loader = (function() {
       title: id.toString(),
       extension: 'sb2',
       files: [],
+      type: 'zip',
     };
 
     // sb2 files have two ways of storing references to files.
@@ -187,8 +208,9 @@ window.loader = (function() {
   // Loads a project, automatically choses the loader
   function loadProject(id, type) {
     const loaders = {
-      "sb2": loader.loadScratch2Project,
-      "sb3": loader.loadScratch3Project,
+      "sb": loadScratch1Project,
+      "sb2": loadScratch2Project,
+      "sb3": loadScratch3Project,
     };
     type = type.toString();
     if (!(type in loaders)) {
@@ -198,6 +220,7 @@ window.loader = (function() {
   }
 
   return {
+    loadScratch1Project: loadScratch1Project,
     loadScratch2Project: loadScratch2Project,
     loadScratch3Project: loadScratch3Project,
     loadProject: loadProject,
