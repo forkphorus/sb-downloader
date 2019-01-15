@@ -2,6 +2,9 @@
 <html>
 
 <head>
+  <title>.sb downloader</title>
+  <meta charset="utf8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: sans-serif;
@@ -87,7 +90,7 @@
     #asset-list .name {
       font-size: 10px;
     }
-    #asset-list .preview > * {
+    #asset-list .preview {
       max-width: 360px;
     }
 
@@ -99,19 +102,16 @@
       color: #000;
     }
   </style>
-  <title>.sb downloader</title>
-  <meta charset="utf8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
 <body>
   <h1><code>.sb</code> downloader</h1>
-  <p><code>.sb</code> downloader downloads Scratch 1, 2, or 3 projects, even unshared ones. Enter the project ID then choose the format.</p>
+  <p><code>.sb</code> downloader downloads Scratch 1, 2, or 3 projects. (even unshared ones). Enter the project ID then choose the format.</p>
 
   <label id="project-select">
-    <span class="project-select-part">https://scratch.mit.edu/projects/</span>
+    https://scratch.mit.edu/projects/
     <input id="project-select-input" placeholder="116491454" autocomplete="off">
-    <span class="project-select-part">/</span>
+    /
   </label>
 
   <label id="type-select">

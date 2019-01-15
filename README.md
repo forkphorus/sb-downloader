@@ -4,4 +4,4 @@
 
 ## Why
 
-I thought it would be kinda cool to make this so I did. It is no longer possible to download projects as `.sb2` or `.sb` files from the Scratch 3 interface. By [enabling the asset viewer](https://forkphorus.github.io/sb-downloader/?assets=1) you can also download assets from projects, a feature not possible in Scratch 3 (yet).
+It is no longer possible to download projects as `.sb2` or `.sb` files from the Scratch 3 interface. By [enabling the experimental asset viewer](https://forkphorus.github.io/sb-downloader/?assets=1) you can also extract assets from projects, a feature not yet possible in Scratch 3.
