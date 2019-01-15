@@ -18,6 +18,18 @@
       margin: 0;
     }
 
+    a {
+      color: #25d;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    a:visited {
+      color: #73c;
+    }
+    a:active {
+      color: #03a;
+    }
+
     .hidden {
       display: none;
     }
@@ -41,7 +53,6 @@
     }
 
     #type-select {
-      display: block;
       width: 100%;
       text-align: right;
     }
@@ -93,6 +104,9 @@
     #asset-list .preview {
       max-width: 360px;
     }
+    #asset-list {
+      text-align: center;
+    }
 
     code {
       font-family: Menlo, Monaco, Consolas, Courier New, monospace;
@@ -114,15 +128,25 @@
     /
   </label>
 
-  <label id="type-select">
-    Download project as
-    <select id="type-select-input" autocomplete="off">
-      <option value="" selected disabled>select</option>
-      <option value="sb">.sb</option>
-      <option value="sb2">.sb2</option>
-      <option value="sb3">.sb3</option>
-    </select>
-  </label>
+  <table width="100%">
+    <tr>
+      <td align="left">
+        <a id="asset-list-enable" href="#">enable asset viewer</a>
+      </td>
+
+      <td align="right">
+        <label id="type-select">
+        Download project as
+        <select id="type-select-input" autocomplete="off">
+          <option value="" selected disabled>select</option>
+          <option value="sb">.sb</option>
+          <option value="sb2">.sb2</option>
+          <option value="sb3">.sb3</option>
+        </select>
+      </label>
+      </td>
+    </tr>
+  </table>
 
   <div id="progress-bar">
     <div id="progress-bar-fill"></div>
@@ -133,11 +157,15 @@
     <table width="100%">
       <thead>
         <tr>
-          <th width="50%">Path</th>
+          <th width="50%">Name</th>
           <th width="50%">Preview</th>
         </tr>
       </thead>
       <tbody id="asset-list">
+        <tr>
+          <td><i>nothing</i></td>
+          <td><i>nothing</i></td>
+        </tr>
         <!-- javascript will insert the assets here -->
       </tbody>
     </table>
@@ -159,6 +187,9 @@
       const progressBarContainer = document.querySelector('#progress-bar');
       const assetTableContainer = document.querySelector('#asset-list-container');
       const assetTable = document.querySelector('#asset-list');
+      const assetTableEnable = document.querySelector('#asset-list-enable');
+
+      let lastResult = null;
 
       // Returns an object containing all the query string parameters
       function getQuery(queryString) {
@@ -251,31 +282,24 @@
         setProgressState('Downloading project files (' + finishedTasks + '/' + totalTasks + ')');
       };
 
-      // Load URL paramaters
-
-      const searchQuery = getQuery();
-      if (searchQuery.id) {
-        projectInput.value = searchQuery.id;
-      }
-      if (searchQuery.type) {
-        typeInput.value = searchQuery.type;
-      }
-      if (searchQuery.id && searchQuery.type) {
-        loadInput();
-      }
-
-      if (searchQuery.assets) {
-        assetTableContainer.classList.remove('hidden');
-      }
-
       // Asset listing
+      assetTableEnable.addEventListener('click', function(e) {
+        enableAssets();
+        if (lastResult && lastResult.files) {
+          displayAssets(lastResult.files);
+        }
+        setQuery('assets', 'on');
+        e.preventDefault();
+      });
+
+      // Enales the asset viewer
+      function enableAssets() {
+        assetTableContainer.classList.remove('hidden');
+        assetTableEnable.classList.add('hidden');
+      }
 
       // Displays a list of files
       function displayAssets(files) {
-        if (assetTableContainer.classList.contains('hidden')) {
-          return;
-        }
-
         while (assetTable.firstChild) {
           assetTable.removeChild(assetTable.firstChild);
         }
@@ -283,7 +307,7 @@
         function bufferToString(buffer) {
           return decoder.decode(new Uint8Array(buffer));
         }
-        
+
         const decoder = new TextDecoder('utf8');
 
         function getPreview(file) {
@@ -306,7 +330,7 @@
               return cannotPreview();
             }
 
-            const blob = new Blob([file.data]);
+            const blob = new Blob([file.data], {type: 'image/' + extension});
             const url = URL.createObjectURL(blob);
             const img = document.createElement('img');
             img.src = url;
@@ -396,32 +420,54 @@
 
       // Starts loading a project. Downloads it when complete.
       function downloadProject(id, type) {
-        let result;
         return loader.loadProject(id, type)
           .then((r) => {
-            result = r;
+            lastResult = r;
+
             setProgressState('Saving project...');
-            // The project could either be a zip archive (in which case we receive a list of files)
-            // or it could be a fully parsed arraybuffer
+
+            // We have to convert the result to a Blob.
+            // The result can either give us a list of files to put in an archive,
+            // or it can give us a fully parsed ArrayBuffer.
             if (r.type === 'zip') {
               return loader.createArchive(r.files)
             } else if (r.type === 'buffer') {
               return new Blob([r.buffer]);
+            } else {
+              throw new Error('unknown type: ' + r.type);
             }
           })
           .then((blob) => {
-            if (result.files) {
-              displayAssets(result.files);
+            // Only display assets if there are some files to preview and they will be visible.
+            if (lastResult.files && !assetTableContainer.classList.contains('hidden')) {
+              displayAssets(lastResult.files);
             }
+
             // Create a download link and automatically click it
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = result.title + '.' + result.extension;
+            a.download = lastResult.title + '.' + lastResult.extension;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
           });
+      }
+
+      // Load URL paramaters
+
+      const searchQuery = getQuery();
+      if (searchQuery.id) {
+        projectInput.value = searchQuery.id;
+      }
+      if (searchQuery.type) {
+        typeInput.value = searchQuery.type;
+      }
+      if (searchQuery.assets === 'on') {
+        enableAssets();
+      }
+      if (searchQuery.id && searchQuery.type) {
+        loadInput();
       }
     }());
   </script>
