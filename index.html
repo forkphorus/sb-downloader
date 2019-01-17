@@ -5,19 +5,29 @@
   <title>.sb downloader</title>
   <meta charset="utf8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
   <style>
+    /* basic styles to make things look nicer */
     body {
       font-family: sans-serif;
       width: 480px;
       margin: 24px auto;
     }
+    p {
+      margin: 8px 0 16px 0;
+    }
     h1 {
-      font-weight: normal;
       font-size: 54px;
       line-height: 72px;
       margin: 0;
     }
-
+    h2 {
+      font-size: 24px;
+      margin: 16px 0 0 0;
+    }
+    h1, h2 {
+      font-weight: normal;
+    }
     a {
       color: #25d;
       text-decoration: underline;
@@ -29,16 +39,36 @@
     a:active {
       color: #03a;
     }
+    code {
+      font-family: Menlo, Monaco, Consolas, Courier New, monospace;
+      background: #f1f1f1;
+      border-radius: 3px;
+      margin: 3px;
+      color: #000;
+    }
 
+    /* remove spinners from number inputs */
+    /* https://stackoverflow.com/a/26379166 */
+    input[type=number].no-spinners::-webkit-outer-spin-button,
+    input[type=number].no-spinners::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    input[type=number].no-spinners {
+        -moz-appearance: textfield;
+    }
+
+    /* simple element hiding */
     .hidden {
       display: none;
     }
 
+    /* project ID input */
     #project-select {
       display: flex;
       flex-direction: row;
       flex-wrap: nowrap;
-      font-size: 23px;
+      font-size: 24px;
       line-height: 32px;
     }
     #project-select-input {
@@ -52,12 +82,17 @@
       text-align: center;
     }
 
+    /* project type input */
     #type-select {
       width: 100%;
       text-align: right;
     }
     #type-select-input {
-      border: 1px solid transparent;
+      border: 1px solid #aaa;
+      background-color: #eee;
+    }
+    #type-select-input > option:not([disabled]) {
+      background-color: white;
     }
     #type-select-input:hover {
       border: 1px solid #777;
@@ -66,13 +101,12 @@
       border: 1px solid #333;
     }
 
+    /* progress bar */
     #progress-bar {
       position: relative;
       width: 100%;
       height: 35px;
       margin-top: 10px;
-      opacity: 0;
-      transition: opacity 0.3s;
     }
     #progress-bar-fill {
       position: absolute;
@@ -98,6 +132,7 @@
       z-index: 10;
     }
 
+    /* asset list */
     #asset-list .name {
       font-size: 10px;
     }
@@ -107,31 +142,26 @@
     #asset-list {
       text-align: center;
     }
-
-    code {
-      font-family: Menlo, Monaco, Consolas, Courier New, monospace;
-      background: #f5f5f5;
-      border-radius: 3px;
-      padding: 3px;
-      color: #000;
-    }
   </style>
 </head>
 
 <body>
   <h1><code>.sb</code> downloader</h1>
-  <p><code>.sb</code> downloader downloads Scratch 1, 2, or 3 projects. (even unshared ones). Enter the project ID then choose the format.</p>
+  <p><code>.sb</code> downloader downloads <a href="https://scratch.mit.edu/">Scratch</a> 1, 2, or 3 projects. (even unshared ones). Enter the project ID then choose the format.</p>
 
   <label id="project-select">
     https://scratch.mit.edu/projects/
-    <input id="project-select-input" placeholder="116491454" autocomplete="off">
+    <input type="number" min="0" id="project-select-input" placeholder="116491454" autocomplete="off" class="no-spinners">
     /
   </label>
 
   <table width="100%">
     <tr>
       <td align="left">
-        <a id="asset-list-enable" href="#">enable asset viewer</a>
+        <label>
+          <input type="checkbox" id="asset-list-toggle">
+          enable asset viewer
+        </label>
       </td>
 
       <td align="right">
@@ -148,7 +178,7 @@
     </tr>
   </table>
 
-  <div id="progress-bar">
+  <div id="progress-bar" class="hidden">
     <div id="progress-bar-fill"></div>
     <div id="progress-bar-text"></div>
   </div>
@@ -171,6 +201,9 @@
     </table>
   </div>
 
+  <h2>Credits</h2>
+  <p>Thanks to <a href="https://scratch.mit.edu/">Scratch</a> for providing a sufficient public API. The general look of <code>.sb</code> downloader is inspired by <a href="https://phosphorus.github.io/">phosphorus</a>. The <a href="https://stuk.github.io/jszip/">JSZip</a> library is used for creation of zip archives.</p>
+
   <script src="jszip.min.js"></script>
   <script src="loader.js"></script>
   <script>
@@ -187,8 +220,9 @@
       const progressBarContainer = document.querySelector('#progress-bar');
       const assetTableContainer = document.querySelector('#asset-list-container');
       const assetTable = document.querySelector('#asset-list');
-      const assetTableEnable = document.querySelector('#asset-list-enable');
+      const assetTableToggle = document.querySelector('#asset-list-toggle');
 
+      // The last loaded project, if any.
       let lastResult = null;
 
       // Returns an object containing all the query string parameters
@@ -200,6 +234,7 @@
           const pair = pairs[i].split('=');
           const key = decodeURIComponent(pair[0]);
           const value = decodeURIComponent(pair[1] || '');
+          // If either key or value is empty, omit it.
           if (key && value) {
             query[key] = value;
           }
@@ -213,16 +248,22 @@
         query[key] = value;
         let url = '?';
         for (const key of Object.keys(query)) {
+          const value = query[key];
+          // omit parameters with empty keys or values
+          // allows '' as a value to remove a parameter
+          if (!key || !value) {
+            continue;
+          }
           if (url.length > 1) {
             url += '&';
           }
-          url += encodeURIComponent(key) + '=' + encodeURIComponent(query[key]);
+          url += encodeURIComponent(key) + '=' + encodeURIComponent(value);
         }
         history.replaceState({}, '', url);
       }
 
       // Project ID input
-      let inputTimeout;
+      let inputTimeout = null;
       projectInput.addEventListener('input', function() {
         if (inputTimeout) {
           clearTimeout(inputTimeout);
@@ -252,11 +293,11 @@
       }
       // Shows the progress bar
       function showProgress() {
-        progressBarContainer.style.opacity = '1';
+        progressBarContainer.classList.remove('hidden');
       }
       // Hides the progress bar
       function hideProgress() {
-        progressBarContainer.style.opacity = '0';
+        progressBarContainer.clasList.add('hidden');
       }
       // Sets the text and 'state' of the progress bar (usually changes color)
       function setProgressState(message, state) {
@@ -267,48 +308,59 @@
       // Install progress hooks
       let finishedTasks = 0;
       let totalTasks = 0;
+      function updateProgressBarHooks() {
+        setProgress(finishedTasks / totalTasks);
+        setProgressState('\u23f3 Downloading project files (' + finishedTasks + '/' + totalTasks + ')');
+      }
       loader.progressHooks.start = function() {
         finishedTasks = 0;
         totalTasks = 0;
       };
       loader.progressHooks.newTask = function() {
         totalTasks++;
-        setProgress(finishedTasks / totalTasks);
-        setProgressState('Downloading project files (' + finishedTasks + '/' + totalTasks + ')');
+        updateProgressBarHooks();
       };
       loader.progressHooks.finishTask = function() {
         finishedTasks++;
-        setProgress(finishedTasks / totalTasks);
-        setProgressState('Downloading project files (' + finishedTasks + '/' + totalTasks + ')');
+        updateProgressBarHooks();
       };
 
       // Asset listing
-      assetTableEnable.addEventListener('click', function(e) {
-        enableAssets();
-        if (lastResult && lastResult.files) {
-          displayAssets(lastResult.files);
-        }
-        setQuery('assets', 'on');
+      assetTableToggle.addEventListener('change', function(e) {
+        toggleAssets(e.target.checked);
         e.preventDefault();
       });
-
-      // Enales the asset viewer
-      function enableAssets() {
-        assetTableContainer.classList.remove('hidden');
-        assetTableEnable.classList.add('hidden');
+      // Toggles the asset viewer. Might load or reset the asset list.
+      function toggleAssets(enabled) {
+        if (enabled) {
+          assetTableContainer.classList.remove('hidden');
+          setQuery('assets', 'on');
+          if (lastResult && lastResult.files) {
+            displayAssets(lastResult.files);
+          }
+        } else {
+          assetTableContainer.classList.add('hidden');
+          setQuery('assets', '');
+          resetAssets();
+        }
+        assetTableToggle.checked = enabled;
       }
-
-      // Displays a list of files
-      function displayAssets(files) {
+      // Removes all existing assets in the list
+      function resetAssets() {
         while (assetTable.firstChild) {
           assetTable.removeChild(assetTable.firstChild);
         }
+      }
+      // Displays a list of files
+      function displayAssets(files) {
+        resetAssets();
+
+        // Used to decode text in bufferToString()
+        const decoder = new TextDecoder('utf8');
 
         function bufferToString(buffer) {
           return decoder.decode(new Uint8Array(buffer));
         }
-
-        const decoder = new TextDecoder('utf8');
 
         function getPreview(file) {
           const path = file.path;
@@ -319,6 +371,7 @@
           const AUDIO_EXTENSIONS = ['mp3', 'wav'];
           const TEXT_EXTENSIONS = ['json'];
 
+          // Returns an element indicating that this asset cannot be previewed.
           function cannotPreview() {
             const text = document.createElement('i');
             text.textContent = 'cannot preview';
@@ -330,6 +383,7 @@
               return cannotPreview();
             }
 
+            // Images are loaded by setting an <img> src to a Blob URL
             const blob = new Blob([file.data], {type: 'image/' + extension});
             const url = URL.createObjectURL(blob);
             const img = document.createElement('img');
@@ -340,6 +394,7 @@
               return cannotPreview();
             }
 
+            // SVGs are loaded by setting an <img> src to a data: URL for the SVG source
             const image = document.createElement('img');
             const source = bufferToString(file.data);
             try {
@@ -353,14 +408,17 @@
               return cannotPreview();
             }
 
+            // Sounds are loaded by loading a Blob URL in an <audio> with controls enabled
             const blob = new Blob([file.data]);
             const url = URL.createObjectURL(blob);
             const audio = document.createElement('audio');
             audio.src = url;
+            // enabling controls ensures that it will be visible
             audio.controls = true;
             audio.autoplay = false;
             return audio;
           } else if (TEXT_EXTENSIONS.includes(extension)) {
+            // Text things are loaded using a readonly <textarea>
             const textarea = document.createElement('textarea');
             textarea.readOnly = true;
             textarea.textContent = file.data;
@@ -393,8 +451,9 @@
 
       // Loads the currently input project
       function loadInput() {
-        const id = projectInput.value;
         const type = typeInput.value;
+        // Ignore all whitespace when getting the project ID
+        const id = projectInput.value.replace(/\s/g, '');
 
         if (id.trim() === '') {
           return;
@@ -403,23 +462,25 @@
         setQuery('id', id);
         setQuery('type', type);
 
+        resetAssets();
         resetProgress();
         showProgress();
 
         downloadProject(id, type)
           .then(() => {
-            setProgressState('Complete', 'success');
+            setProgressState('\u2705 Done', 'success');
             setProgress(1);
           })
           .catch((err) => {
             console.error(err);
-            setProgressState('Project is not available as a .' + type, 'error');
+            setProgressState('\u274c Project is not available as a .' + type, 'error');
             setProgress(1);
           });
       }
 
       // Starts loading a project. Downloads it when complete.
       function downloadProject(id, type) {
+        lastResult = null;
         return loader.loadProject(id, type)
           .then((r) => {
             lastResult = r;
@@ -464,7 +525,7 @@
         typeInput.value = searchQuery.type;
       }
       if (searchQuery.assets === 'on') {
-        enableAssets();
+        toggleAssets(true);
       }
       if (searchQuery.id && searchQuery.type) {
         loadInput();

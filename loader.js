@@ -1,5 +1,3 @@
-'use strict';
-
 // The loader module of the project.
 // Implements all loading and archiving logic.
 // No UI logic is implemented here, but hooks allow adding UI logic.
@@ -16,6 +14,33 @@ window.loader = (function() {
     // Indicates a task has finished
     finishTask() {},
   };
+
+  // Sorts a list of files in-place.
+  function sortFiles(files) {
+    files.sort((a, b) => {
+      const nameA = a.path;
+      const nameB = b.path;
+
+      // project.json always the top
+      if (nameA === "project.json") {
+        return -1;
+      } else if (nameB === "project.json") {
+        return 1;
+      }
+
+      const valueA = +nameA.split('.').shift() || 0;
+      const valueB = +nameB.split('.').shift() || 0;
+
+      if (valueA < valueB) {
+        return -1;
+      } else if (valueA > valueB) {
+        return 1;
+      }
+
+      // Fallback to just a string compare
+      return nameA.localeCompare(nameB);
+    });
+  }
   
   function loadScratch1Project(id) {
     const PROJECTS_API = 'https://projects.scratch.mit.edu/$id';
@@ -135,6 +160,7 @@ window.loader = (function() {
       .then(() => {
         // We must add the project JSON at the end because it may have been changed during the loading.
         result.files.push({path: 'project.json', data: JSON.stringify(projectData)});
+        sortFiles(result.files);
         progressHooks.finishTask();
         return result;
       });
@@ -200,6 +226,7 @@ window.loader = (function() {
         return Promise.all(assets.map((a) => addFile(a)));
       })
       .then(() => {
+        sortFiles(result.files);
         progressHooks.finishTask();
         return result;
       });
@@ -226,9 +253,9 @@ window.loader = (function() {
   // Loads a project, automatically choses the loader
   function loadProject(id, type) {
     const loaders = {
-      "sb": loadScratch1Project,
-      "sb2": loadScratch2Project,
-      "sb3": loadScratch3Project,
+      sb: loadScratch1Project,
+      sb2: loadScratch2Project,
+      sb3: loadScratch3Project,
     };
     type = type.toString();
     if (!(type in loaders)) {
