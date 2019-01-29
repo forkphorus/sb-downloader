@@ -112,24 +112,26 @@ window.loader = (function() {
       }
     }
 
-    function addFile(data) {
+    function addAsset(asset) {
       progressHooks.newTask();
 
-      const md5 = md5Of(data);
-      const extension = md5.split('.').pop();
+      const md5 = asset.md5;
+      const extension = asset.extension;
       const accumlator = claimAccumlatedID(extension);
       const path = accumlator + '.' + extension;
 
-      // Update IDs to match the accumulator
-      // Downloaded projects usually use -1 for all of these, but sometimes they exist and are just wrong.
-      if ('baseLayerID' in data) {
-        data.baseLayerID = accumlator;
-      }
-      if ('soundID' in data) {
-        data.soundID = accumlator;
-      }
-      if ('penLayerID' in data) {
-        data.penLayerID = accumlator;
+      // Update IDs in all references to match the accumulator
+      // Downloaded projects usually use -1 for all of these, but sometimes they exist and are just wrong since we're redoing them all.
+      for (const reference of asset.references) {
+        if ('baseLayerID' in reference) {
+          reference.baseLayerID = accumlator;
+        }
+        if ('soundID' in reference) {
+          reference.soundID = accumlator;
+        }
+        if ('penLayerID' in reference) {
+          reference.penLayerID = accumlator;
+        }
       }
 
       return fetch(ASSETS_API.replace('$path', md5))
@@ -137,10 +139,31 @@ window.loader = (function() {
         .then((buffer) => {
           result.files.push({
             path: path,
-            data: buffer
+            data: buffer,
           });
           progressHooks.finishTask();
         });
+    }
+
+    // Processes a list of assets
+    // Finds and groups duplicate assets.
+    function processAssets(assets) {
+      // Records a list of all unique asset md5s and stores all references to an asset.
+      const md5s = {};
+
+      for (const data of assets) {
+        const md5ext = md5Of(data);
+        if (!(md5ext in md5s)) {
+          md5s[md5ext] = {
+            md5: md5ext,
+            extension: md5ext.split('.').pop(),
+            references: [],
+          };
+        }
+        md5s[md5ext].references.push(data);
+      }
+
+      return Object.values(md5s);
     }
 
     progressHooks.start();
@@ -154,11 +177,11 @@ window.loader = (function() {
         const targets = [].concat.apply([], [projectData, children]);
         const costumes = [].concat.apply([], targets.map((c) => c.costumes || []));
         const sounds = [].concat.apply([], targets.map((c) => c.sounds || []));
-        const assets = [].concat.apply([], [costumes, sounds, projectData]);
-        return Promise.all(assets.map((a) => addFile(a)));
+        const assets = processAssets([].concat.apply([], [costumes, sounds, projectData]));
+        return Promise.all(assets.map((a) => addAsset(a)));
       })
       .then(() => {
-        // We must add the project JSON at the end because it may have been changed during the loading.
+        // We must add the project JSON at the end because it was probably changed during the loading from updating asset IDs
         result.files.push({path: 'project.json', data: JSON.stringify(projectData)});
         sortFiles(result.files);
         progressHooks.finishTask();
