@@ -133,6 +133,9 @@
     }
 
     /* asset list */
+    #asset-list-container {
+      margin-top: 10px;
+    }
     #asset-list .name {
       font-size: 10px;
     }
@@ -141,6 +144,13 @@
     }
     #asset-list {
       text-align: center;
+    }
+    #asset-list:empty:after {
+      content: 'Nothing to preview';
+      font-style: italic;
+    }
+    #asset-list tr:hover td > * {
+      outline: 1px solid black;
     }
   </style>
 </head>
@@ -184,6 +194,7 @@
   </div>
 
   <div id="asset-list-container" class="hidden">
+    <i><small>Right click asset previews to save. Scratch 1 projects cannot be previewed.</small></i>
     <table width="100%">
       <thead>
         <tr>
@@ -192,17 +203,13 @@
         </tr>
       </thead>
       <tbody id="asset-list">
-        <tr>
-          <td><i>nothing</i></td>
-          <td><i>nothing</i></td>
-        </tr>
         <!-- javascript will insert the assets here -->
       </tbody>
     </table>
   </div>
 
   <h2>Credits</h2>
-  <p>Thanks to <a href="https://scratch.mit.edu/">Scratch</a> for providing a sufficient public API. The general look of <code>.sb</code> downloader is inspired by <a href="https://phosphorus.github.io/">phosphorus</a>. The <a href="https://stuk.github.io/jszip/">JSZip</a> library is used for creation of zip archives.</p>
+  <p>Thanks to <a href="https://scratch.mit.edu/">Scratch</a> for providing a sufficient public API. The general look of <code>.sb</code> downloader is inspired by <a href="https://phosphorus.github.io/">phosphorus</a>. The <a href="https://stuk.github.io/jszip/">JSZip</a> library is used for creating zip archives.</p>
 
   <script src="jszip.min.js"></script>
   <script src="loader.js"></script>

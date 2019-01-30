@@ -42,12 +42,16 @@ window.loader = (function() {
     });
   }
   
+  // Loads a Scratch 1 project
   function loadScratch1Project(id) {
-    const PROJECTS_API = 'https://projects.scratch.mit.edu/$id';
-    
+    const PROJECTS_API = 'https://projects.scratch.mit.edu/internalapi/project/$id/get/';
+    const HEADER = 'ScratchV01';
+
     const result = {
       title: id.toString(),
       extension: 'sb',
+      // Scratch 1 projects load as buffers because they use a custom format that I don't want to implement.
+      // The API only responds with the full file.
       type: 'buffer',
       buffer: null,
     };
@@ -55,13 +59,15 @@ window.loader = (function() {
     return fetch(PROJECTS_API.replace('$id', id))
       .then((data) => data.arrayBuffer())
       .then((buffer) => {
-        // Valid scratch 1 projects start with "ScratchV01"
-        // Search the first byte to make sure it's an S.
-        // The API route also returns Scratch 2/3 projects which are JSON.
-        const firstBit = new Uint8Array(buffer.slice(0, 1))[0];
-        if (firstBit !== 'S'.charCodeAt(0)) {
-          throw new Error('invalid scratch 1 project (invalid first byte)');
+
+        // Check that the header matches that of a Scratch 1 project.
+        const header = new Uint8Array(buffer.slice(0, HEADER.length));
+        for (let i = 0; i < HEADER.length; i++) {
+          if (header[i] !== HEADER.charCodeAt(i)) {
+            throw new Error('Failed header check, expected ' + HEADER.charCodeAt(i) + ' but got ' + header[i] + ' @ ' + i);
+          }
         }
+
         result.buffer = buffer;
         return result;
       });
@@ -235,11 +241,14 @@ window.loader = (function() {
     return fetch(PROJECTS_API.replace('$id', id))
       .then((request) => request.json())
       .then((projectData) => {
-        result.files.push({path: 'project.json', data: JSON.stringify(projectData)});
-
-        if (!Array.isArray(projectData.targets)) {
-          throw new Error('invalid sb3 project (missing targets)');
+        if (typeof projectData.objName === 'string') {
+          throw new Error('Not a Scratch 3 project, found objName (probably a Scratch 2 project)');
         }
+        if (!Array.isArray(projectData.targets)) {
+          throw new Error('Not a Scratch 3 project, missing targets');
+        }
+
+        result.files.push({path: 'project.json', data: JSON.stringify(projectData)});
 
         const targets = projectData.targets;
         const costumes = [].concat.apply([], targets.map((t) => t.costumes || []));
