@@ -4,4 +4,4 @@
 
 ## Why
 
-It is no longer possible to download projects as `.sb2` or `.sb` files from the Scratch 3 interface. Therefore, projects broken by Scratch 3 cannot be run in an older version of Scratch unless you already downloaded them. Additionally, `.sb` downloader's asset viewer allows you to easily extract assets from projects, which is not yet possible in Scratch 3's interface.
+It is no longer possible to download projects as `.sb2` or `.sb` files from the Scratch 3 interface. As a result, projects broken by Scratch 3 cannot be run in an older version of Scratch unless you already downloaded them.
