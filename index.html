@@ -319,15 +319,15 @@
         setProgress(finishedTasks / totalTasks);
         setProgressState('\u23f3 Downloading project files (' + finishedTasks + '/' + totalTasks + ')');
       }
-      loader.progressHooks.start = function() {
+      SBDL.progressHooks.start = function() {
         finishedTasks = 0;
         totalTasks = 0;
       };
-      loader.progressHooks.newTask = function() {
+      SBDL.progressHooks.newTask = function() {
         totalTasks++;
         updateProgressBarHooks();
       };
-      loader.progressHooks.finishTask = function() {
+      SBDL.progressHooks.finishTask = function() {
         finishedTasks++;
         updateProgressBarHooks();
       };
@@ -488,17 +488,16 @@
       // Starts loading a project. Downloads it when complete.
       function downloadProject(id, type) {
         lastResult = null;
-        return loader.loadProject(id, type)
+        return SBDL.loadProject(id, type)
           .then((r) => {
             lastResult = r;
 
             setProgressState('Saving project...');
 
-            // We have to convert the result to a Blob.
-            // The result can either give us a list of files to put in an archive,
-            // or it can give us a fully parsed ArrayBuffer.
+            // Convert the result to a Blob so it's easier to download.
+            // The result can either give us a list of files to put in an archive, or an ArrayBuffer.
             if (r.type === 'zip') {
-              return loader.createArchive(r.files)
+              return SBDL.createArchive(r.files, new JSZip());
             } else if (r.type === 'buffer') {
               return new Blob([r.buffer]);
             } else {

@@ -1,15 +1,14 @@
-// The loader module of the project.
-// Implements all loading and archiving logic.
-// No UI logic is implemented here, but hooks allow adding UI logic.
+// MIT Licensed.
+// https://github.com/forkphorus/sb-downloader
 
-window.loader = (function() {
+window.SBDL = (function() {
   'use strict';
 
   // Customizable hooks that can be overridden by other scripts to measure progress.
   const progressHooks = {
     // Indicates a loader has just started
     start() {},
-    // Indicates a new task has started (could be anything like a fetch)
+    // Indicates a new task has started.
     newTask() {},
     // Indicates a task has finished
     finishTask() {},
@@ -55,7 +54,7 @@ window.loader = (function() {
       type: 'buffer',
       buffer: null,
     };
-    
+
     return fetch(PROJECTS_API.replace('$id', id))
       .then((data) => data.arrayBuffer())
       .then((buffer) => {
@@ -264,13 +263,8 @@ window.loader = (function() {
       });
   }
 
-  // Creates an archive of files
-  // Requires JSZip to be installed
-  function createArchive(files) {
-    if (!window.JSZip) {
-      throw new Error('JSZip is not installed');
-    }
-    const zip = new JSZip();
+  // Adds a list of files to a JSZip archive.
+  function createArchive(files, zip) {
     for (const file of files) {
       const path = file.path;
       const data = file.data;
@@ -291,7 +285,7 @@ window.loader = (function() {
     };
     type = type.toString();
     if (!(type in loaders)) {
-      return Promise.reject('Unknown type');
+      return Promise.reject('Unknown type: ' + type);
     }
     return loaders[type](id);
   }
