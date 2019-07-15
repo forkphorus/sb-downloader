@@ -492,12 +492,12 @@
           .then((r) => {
             lastResult = r;
 
-            setProgressState('Saving project...');
+            setProgressState('Creating archive...');
 
             // Convert the result to a Blob so it's easier to download.
             // The result can either give us a list of files to put in an archive, or an ArrayBuffer.
             if (r.type === 'zip') {
-              return SBDL.createArchive(r.files, new JSZip());
+              return SBDL.createArchive(r.files, setProgress);
             } else if (r.type === 'buffer') {
               return new Blob([r.buffer]);
             } else {

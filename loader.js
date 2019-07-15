@@ -264,8 +264,10 @@ window.SBDL = (function() {
   }
 
   // Adds a list of files to a JSZip archive.
-  function createArchive(files, zip) {
-    for (const file of files) {
+  function createArchive(files, progressCallback) {
+    const zip = new JSZip();
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
       const path = file.path;
       const data = file.data;
       zip.file(path, data);
@@ -273,6 +275,8 @@ window.SBDL = (function() {
     return zip.generateAsync({
       type: 'blob',
       compression: 'DEFLATE',
+    }, function(metadata) {
+      progressCallback(metadata.percent / 100);
     });
   }
 
