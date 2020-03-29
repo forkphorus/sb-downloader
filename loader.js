@@ -215,21 +215,24 @@ window.SBDL = (function() {
     // Finds and groups duplicate assets.
     function processAssets(assets) {
       // Records a list of all unique asset md5s and stores all references to an asset.
-      const md5s = {};
+      const hashToAssetMap = Object.create(null);
+      const allAssets = [];
 
       for (const data of assets) {
         const md5ext = md5Of(data);
-        if (!(md5ext in md5s)) {
-          md5s[md5ext] = {
+        if (!(md5ext in hashToAssetMap)) {
+          const asset = {
             md5: md5ext,
             extension: md5ext.split('.').pop(),
             references: [],
           };
+          hashToAssetMap[md5ext] = asset;
+          allAssets.push(asset);
         }
-        md5s[md5ext].references.push(data);
+        hashToAssetMap[md5ext].references.push(data);
       }
 
-      return Object.values(md5s);
+      return allAssets;
     }
 
     const children = projectData.children.filter((c) => !c.listName && !c.target);
