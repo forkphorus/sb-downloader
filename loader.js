@@ -1,6 +1,12 @@
 // MIT Licensed.
 // https://github.com/forkphorus/sb-downloader
 
+// Note: The API of SBDL is not very easy to integrate. Please consider another API first.
+// The API is only designed for web environments, and the progress monitoring API is very strange and doesn't support concurrent downloads properly.
+// Also the API can return two types of results (zip or buffer) and you have to handle both of them in different ways.
+
+// If you want to use this library still, see index.html for a pretty complete usage example (notably downloadProject())
+
 window.SBDL = (function() {
   'use strict';
 
