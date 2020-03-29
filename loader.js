@@ -319,6 +319,8 @@ window.SBDL = (function() {
   }
 
   // Adds a list of files to a JSZip archive.
+  // This is a convenience method to make the library less painful to use. It's not used by SBDL internally.
+  // If a 'zip' type result is returned, pass result.files into here to get a Blob out.
   function createArchive(files, progressCallback) {
     const zip = new JSZip();
     for (let i = 0; i < files.length; i++) {
@@ -331,7 +333,9 @@ window.SBDL = (function() {
       type: 'blob',
       compression: 'DEFLATE',
     }, function(metadata) {
-      progressCallback(metadata.percent / 100);
+      if (progressCallback) {
+        progressCallback(metadata.percent / 100);
+      }
     });
   }
 
