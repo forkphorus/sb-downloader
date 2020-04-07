@@ -99,7 +99,7 @@ window.SBDL = (function() {
         return new Promise((resolve, reject) => {
           const fileReader = new FileReader();
           fileReader.onload = () => resolve(fileReader.result);
-          fileReader.onerror = () => resolve('Cannot read blob as text');
+          fileReader.onerror = () => reject('Cannot read blob as text');
           fileReader.readAsText(blob);
         });
       })
@@ -130,7 +130,7 @@ window.SBDL = (function() {
           buffer: fileReader.result,
         });
       };
-      fileReader.onerror = () => resolve('Cannot read blob as array buffer');
+      fileReader.onerror = () => reject('Cannot read blob as array buffer');
       fileReader.readAsArrayBuffer(blob);
     });
   }
