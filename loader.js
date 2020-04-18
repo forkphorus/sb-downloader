@@ -6,6 +6,7 @@
 // Also the API can return two types of results (zip or buffer) and you have to handle both of them in different ways.
 
 // If you want to use this library still, see index.html for a pretty complete usage example (notably downloadProject())
+// Converting projects to archives may require JSZip: https://stuk.github.io/jszip/ (tested on 3.1.5)
 
 window.SBDL = (function() {
   'use strict';
