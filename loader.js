@@ -93,7 +93,12 @@ window.SBDL = (function() {
 
     // The fetch routine is rather complicated because we have to determine which type of project we are looking at.
     return fetch(PROJECTS_API.replace('$id', id))
-      .then((request) => request.blob())
+      .then((request) => {
+        if (request.status !== 200) {
+          throw new Error('Returned status code: ' + request.status);
+        }
+        return request.blob();
+      })
       .then((b) => {
         blob = b;
         return new Promise((resolve, reject) => {

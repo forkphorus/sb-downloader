@@ -479,8 +479,12 @@
           .catch((err) => {
             console.error(err);
             let error = '\u274c Project is not available as a .' + type;
-            if (err && err.message && err.message.includes('probably a Scratch 2 project')) {
-              error += ' (It is available as a .sb2)';
+            if (err && err.message) {
+              if (err.message.includes('probably a Scratch 2 project')) {
+                error += ' (It is available as a .sb2)';
+              } else if (err.message.includes('404')) {
+                error += ' (Project does not exist)';
+              }
             }
             setProgressState(error, 'error');
             enableInputs();
