@@ -47,58 +47,29 @@
       color: #000;
     }
 
-    /* remove spinners from number inputs */
-    /* https://stackoverflow.com/a/26379166 */
-    input[type=number].no-spinners::-webkit-outer-spin-button,
-    input[type=number].no-spinners::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-    input[type=number].no-spinners {
-        -moz-appearance: textfield;
-    }
-
-    /* simple element hiding */
-    .hidden {
-      display: none;
-    }
-
     /* project ID input */
     #project-select {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
       font-size: 24px;
       line-height: 32px;
+      border: none;
+      width: 100%;
+      color: rgba(0, 0, 0, 0.4);
     }
-    #project-select-input {
-      font-size: inherit;
-      margin: 0;
-      padding: 0;
-      border: 0;
-      outline: 0;
-      width: 50px;
-      flex-grow: 1;
-      text-align: center;
+    #project-select:focus {
+      color: rgba(0, 0, 0, 1);
+    }
+    #project-select:disabled {
+      background: white;
     }
 
     /* project type input */
-    #type-select {
+    #type-container {
       width: 100%;
-      text-align: right;
+      text-align: center;
     }
-    #type-select-input {
-      border: 1px solid #aaa;
-      background-color: #eee;
-    }
-    #type-select-input > option:not([disabled]) {
-      background-color: white;
-    }
-    #type-select-input:hover {
-      border: 1px solid #777;
-    }
-    #type-select-input:active {
-      border: 1px solid #333;
+
+    :disabled {
+      cursor: not-allowed;
     }
 
     /* progress bar */
@@ -159,43 +130,27 @@
   <h1><code>.sb</code> downloader</h1>
   <p><code>.sb</code> downloader downloads <a href="https://scratch.mit.edu/">Scratch</a> 1, 2, or 3 projects. Enter the project ID then choose the format.</p>
 
-  <label id="project-select">
-    https://scratch.mit.edu/projects/
-    <input type="number" min="0" id="project-select-input" placeholder="116491454" autocomplete="off" class="no-spinners">
-    /
-  </label>
+  <input id="project-select" value="https://scratch.mit.edu/projects/">
 
-  <table width="100%">
-    <tr>
-      <td align="left">
-        <label>
-          <input type="checkbox" id="asset-list-toggle">
-          enable asset viewer
-        </label>
-      </td>
+  <div id="type-container">
+    Download project as
+    <label><input type="radio" name="type" value="sb">.sb</label>
+    <label><input type="radio" name="type" value="sb2">.sb2</label>
+    <label><input type="radio" name="type" value="sb3">.sb3</label>
+  </div>
 
-      <td align="right">
-        <label id="type-select">
-        Download project as
-        <select id="type-select-input" autocomplete="off">
-          <option value="" selected disabled>select</option>
-          <option value="sb">.sb</option>
-          <option value="sb2">.sb2</option>
-          <option value="sb3">.sb3</option>
-        </select>
-      </label>
-      </td>
-    </tr>
-  </table>
-
-  <div id="progress-bar" class="hidden">
+  <div id="progress-bar" hidden>
     <div id="progress-bar-fill"></div>
     <div id="progress-bar-text"></div>
   </div>
 
   <div id="download-link"></div>
 
-  <div id="asset-list-container" class="hidden">
+  <h2>Asset Viewer</h2>
+  <label>
+    <input type="checkbox" id="asset-list-toggle"> Enable asset viewer
+  </label>
+  <div id="asset-list-container" hidden>
     <i><small>Right click asset previews to save. Some projects cannot be previewed.</small></i>
     <table width="100%">
       <thead>
@@ -210,6 +165,9 @@
     </table>
   </div>
 
+  <h2>Code</h2>
+  <p><code>.sb</code> downloader is <a href="https://github.com/forkphorus/sb-downloader">open source</a>.</p>
+
   <h2>Credits</h2>
   <p>Thanks to <a href="https://scratch.mit.edu/">Scratch</a> for providing a sufficient public API. The general look of the downloader is inspired by <a href="https://phosphorus.github.io/">phosphorus</a>. The <a href="https://stuk.github.io/jszip/">JSZip</a> library is used for creating zip archives.</p>
 
@@ -221,9 +179,7 @@
 
       // Element references
 
-      const projectInput = document.querySelector('#project-select-input');
-      const projectInputContainer = document.querySelector('#project-select');
-      const typeInput = document.querySelector('#type-select-input');
+      const projectInput = document.querySelector('#project-select');
       const progressBarFill = document.querySelector('#progress-bar-fill');
       const progressBarText = document.querySelector('#progress-bar-text');
       const progressBarContainer = document.querySelector('#progress-bar');
@@ -231,6 +187,7 @@
       const assetTable = document.querySelector('#asset-list');
       const assetTableToggle = document.querySelector('#asset-list-toggle');
       const downloadLinkEl = document.querySelector('#download-link');
+      const typeInputs = document.getElementsByName('type');
 
       // The last loaded project, if any.
       let lastResult = null;
@@ -274,27 +231,62 @@
 
       // Project ID input
       let inputTimeout = null;
+      projectInput.addEventListener('focus', function() {
+        if (/\d+/.test(projectInput.value)) {
+          projectInput.select();
+        }
+      })
       projectInput.addEventListener('input', function() {
+        const match = projectInput.value.match(/\d+/);
+        const id = match ? match[0] : '';
+
+        projectInput.value = 'https://scratch.mit.edu/projects/' + id;
+
         if (inputTimeout) {
           clearTimeout(inputTimeout);
         }
-        if (typeInput.value) {
+        if (getType()) {
           inputTimeout = setTimeout(function() {
             loadInput();
           }, 500);
         }
       });
+      function getId() {
+        const match = projectInput.value.match(/\d+/);
+        return match ? match[0] : '';
+      }
 
       // Type input
-      typeInput.addEventListener('change', function() {
-        loadInput();
-      });
+      for (const el of typeInputs) {
+        el.addEventListener('change', loadInput);
+      }
+      function getType() {
+        for (const el of typeInputs) {
+          if (el.checked) {
+            return el.value;
+          }
+        }
+        return '';
+      }
+
+      function disableInputs() {
+        projectInput.disabled = true;
+        for (const el of typeInputs) {
+          el.disabled = true;
+        }
+      }
+      function enableInputs() {
+        projectInput.disabled = false;
+        for (const el of typeInputs) {
+          el.disabled = false;
+        }
+      }
 
       // Progress bar methods
 
       // Sets the current progress. Expects a number between 0 and 1
       function setProgress(progress) {
-        progressBarFill.style.width = ( 10 + progress * 90) + '%';
+        progressBarFill.style.width = (10 + progress * 90) + '%';
       }
       // Resets the progress bar
       function resetProgress() {
@@ -303,11 +295,11 @@
       }
       // Shows the progress bar
       function showProgress() {
-        progressBarContainer.classList.remove('hidden');
+        progressBarContainer.hidden = false;
       }
       // Hides the progress bar
       function hideProgress() {
-        progressBarContainer.clasList.add('hidden');
+        progressBarContainer.hidden = true;
       }
       // Sets the text and 'state' of the progress bar (usually changes color)
       function setProgressState(message, state) {
@@ -343,13 +335,13 @@
       // Toggles the asset viewer. Might load or reset the asset list.
       function toggleAssets(enabled) {
         if (enabled) {
-          assetTableContainer.classList.remove('hidden');
+          assetTableContainer.hidden = false;
           setQuery('assets', 'on');
           if (lastResult && lastResult.files) {
             displayAssets(lastResult.files);
           }
         } else {
-          assetTableContainer.classList.add('hidden');
+          assetTableContainer.hidden = true;
           setQuery('assets', '');
           resetAssets();
         }
@@ -457,25 +449,23 @@
         }
       }
 
-      // Project loading and downloading
-
       // Loads the currently input project
       function loadInput() {
-        const type = typeInput.value;
-        // Ignore all whitespace when getting the project ID
-        const id = projectInput.value.replace(/\s/g, '');
-
         if (downloadLinkEl.firstChild) {
           downloadLinkEl.removeChild(downloadLinkEl.firstChild);
         }
 
-        if (id.trim() === '') {
+        const type = getType();
+        const id = getId();
+
+        if (!id || !type) {
           return;
         }
 
         setQuery('id', id);
         setQuery('type', type);
 
+        disableInputs();
         resetAssets();
         resetProgress();
         showProgress();
@@ -483,11 +473,17 @@
         downloadProject(id, type)
           .then(() => {
             setProgressState('\u2705 Done', 'success');
+            enableInputs();
             setProgress(1);
           })
           .catch((err) => {
             console.error(err);
-            setProgressState('\u274c Project is not available as a .' + type, 'error');
+            let error = '\u274c Project is not available as a .' + type;
+            if (err && err.message && err.message.includes('probably a Scratch 2 project')) {
+              error += ' (It is available as a .sb2)';
+            }
+            setProgressState(error, 'error');
+            enableInputs();
             setProgress(1);
           });
       }
@@ -513,7 +509,7 @@
           })
           .then((blob) => {
             // Only display assets if there are some files to preview and they will be visible.
-            if (lastResult.files && !assetTableContainer.classList.contains('hidden')) {
+            if (lastResult.files && !assetTableContainer.hidden) {
               displayAssets(lastResult.files);
             }
 
@@ -530,14 +526,23 @@
           });
       }
 
-      // Load URL paramaters
-
+      // Load URL parameters
       const searchQuery = getQuery();
       if (searchQuery.id) {
-        projectInput.value = searchQuery.id;
+        projectInput.value = 'https://scratch.mit.edu/projects/' + searchQuery.id;
+      } else {
+        projectInput.focus();
+        setTimeout(function() {
+          projectInput.selectionStart = projectInput.selectionEnd = projectInput.value.length;
+        });
       }
       if (searchQuery.type) {
-        typeInput.value = searchQuery.type;
+        for (const el of typeInputs) {
+          if (el.value === searchQuery.type) {
+            el.checked = true;
+            break;
+          }
+        }
       }
       if (searchQuery.assets === 'on') {
         toggleAssets(true);
