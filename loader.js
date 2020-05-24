@@ -10,6 +10,42 @@
 window.SBDL = (function() {
   'use strict';
 
+  const fetchQueue = {
+    concurrentRequests: 0,
+    maxConcurrentRequests: 30,
+    queue: [],
+    add(url) {
+      return new Promise((resolve, reject) => {
+        this.queue.push({ url: url, resolve: resolve, reject: reject });
+        if (this.concurrentRequests < this.maxConcurrentRequests) {
+          this.processNext();
+        }
+      });
+    },
+    processNext() {
+      if (this.queue.length === 0) {
+        return;
+      }
+      const request = this.queue.shift();
+      this.concurrentRequests++;
+      window.fetch(request.url)
+        .then((r) => {
+          this.concurrentRequests--;
+          this.processNext();
+          request.resolve(r);
+        })
+        .catch((err) => {
+          this.concurrentRequests--;
+          this.processNext();
+          request.reject(err);
+        });
+    },
+  };
+
+  function fetch(url) {
+    return fetchQueue.add(url);
+  }
+
   // Customizable hooks that can be overridden by other scripts to measure progress.
   const progressHooks = {
     // Indicates a loader has just started
