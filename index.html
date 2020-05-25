@@ -134,10 +134,10 @@
   <input id="project-select" value="https://scratch.mit.edu/projects/">
 
   <div id="type-container">
-    Download project as
-    <label><input type="radio" name="type" value="sb">.sb</label>
-    <label><input type="radio" name="type" value="sb2">.sb2</label>
-    <label><input type="radio" name="type" value="sb3">.sb3</label>
+    <b>Download project as</b>
+    <button class="download-button" data-type="sb">.sb</button>
+    <button class="download-button" data-type="sb2">.sb2</button>
+    <button class="download-button" data-type="sb3">.sb3</button>
   </div>
 
   <div id="progress-bar" hidden>
@@ -188,7 +188,7 @@
       const assetTable = document.querySelector('#asset-list');
       const assetTableToggle = document.querySelector('#asset-list-toggle');
       const downloadLinkEl = document.querySelector('#download-link');
-      const typeInputs = document.getElementsByName('type');
+      const downloadButtons = document.getElementsByClassName('download-button');
 
       // The last loaded project, if any.
       let lastResult = null;
@@ -231,7 +231,6 @@
       }
 
       // Project ID input
-      let inputTimeout = null;
       projectInput.addEventListener('focus', function() {
         if (/\d+/.test(projectInput.value)) {
           projectInput.select();
@@ -242,15 +241,6 @@
         const id = match ? match[0] : '';
 
         projectInput.value = 'https://scratch.mit.edu/projects/' + id;
-
-        if (inputTimeout) {
-          clearTimeout(inputTimeout);
-        }
-        if (getType()) {
-          inputTimeout = setTimeout(function() {
-            loadInput();
-          }, 500);
-        }
       });
       function getId() {
         const match = projectInput.value.match(/\d+/);
@@ -258,27 +248,21 @@
       }
 
       // Type input
-      for (const el of typeInputs) {
-        el.addEventListener('change', loadInput);
-      }
-      function getType() {
-        for (const el of typeInputs) {
-          if (el.checked) {
-            return el.value;
-          }
-        }
-        return '';
+      for (const button of downloadButtons) {
+        button.addEventListener('click', function() {
+          loadInput(getId(), button.dataset.type);
+        });
       }
 
       function disableInputs() {
         projectInput.disabled = true;
-        for (const el of typeInputs) {
+        for (const el of downloadButtons) {
           el.disabled = true;
         }
       }
       function enableInputs() {
         projectInput.disabled = false;
-        for (const el of typeInputs) {
+        for (const el of downloadButtons) {
           el.disabled = false;
         }
       }
@@ -437,16 +421,9 @@
       }
 
       // Loads the currently input project
-      function loadInput() {
+      function loadInput(id, type) {
         if (downloadLinkEl.firstChild) {
           downloadLinkEl.removeChild(downloadLinkEl.firstChild);
-        }
-
-        const type = getType();
-        const id = getId();
-
-        if (!id || !type) {
-          return;
         }
 
         setQuery('id', id);
@@ -527,19 +504,11 @@
           projectInput.selectionStart = projectInput.selectionEnd = projectInput.value.length;
         });
       }
-      if (searchQuery.type) {
-        for (const el of typeInputs) {
-          if (el.value === searchQuery.type) {
-            el.checked = true;
-            break;
-          }
-        }
-      }
       if (searchQuery.assets === 'on') {
         toggleAssets(true);
       }
       if (searchQuery.id && searchQuery.type) {
-        loadInput();
+        loadInput(searchQuery.id, searchQuery.type);
       }
     }());
   </script>
