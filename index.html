@@ -242,6 +242,7 @@
 
         projectInput.value = 'https://scratch.mit.edu/projects/' + id;
 
+        setButtonsEnabled(!!id);
         resetAssets();
         hideProgress();
         removeDownloadLink();
@@ -258,17 +259,21 @@
         });
       }
 
-      function disableInputs() {
-        projectInput.disabled = true;
+      function setInputEnabled(enabled) {
+        projectInput.disabled = !enabled;
+      }
+      function setButtonsEnabled(enabled) {
         for (const el of downloadButtons) {
-          el.disabled = true;
+          el.disabled = !enabled;
         }
       }
+      function disableInputs() {
+        setInputEnabled(false);
+        setButtonsEnabled(false);
+      }
       function enableInputs() {
-        projectInput.disabled = false;
-        for (const el of downloadButtons) {
-          el.disabled = false;
-        }
+        setInputEnabled(true);
+        setButtonsEnabled(true);
       }
 
       // Progress bar methods
@@ -509,6 +514,7 @@
           projectInput.selectionStart = projectInput.selectionEnd = projectInput.value.length;
         });
       }
+      setButtonsEnabled(!!projectInput.value.match(/\d+/));
       if (searchQuery.assets === 'on') {
         toggleAssets(true);
       }
