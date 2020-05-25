@@ -10,6 +10,19 @@
 window.SBDL = (function() {
   'use strict';
 
+  /**
+   * An error where the project cannot be loaded as the desired type, but it is likely that this project is of another format.
+   */
+  class ProjectFormatError extends Error {
+    constructor(message, probableType) {
+      super(message + ' (probably a .' + probableType + ')');
+      this.probableType = probableType;
+    }
+  }
+
+  const SB_MAGIC = 'ScratchV01';
+  const ZIP_MAGIC = 'PK';
+
   const fetchQueue = {
     concurrentRequests: 0,
     maxConcurrentRequests: 30,
@@ -56,6 +69,16 @@ window.SBDL = (function() {
     finishTask() {},
   };
 
+  function checkMagic(buffer, magic) {
+    const header = new Uint8Array(buffer.slice(0, magic.length));
+    for (let i = 0; i < magic.length; i++) {
+      if (header[i] !== magic.charCodeAt(i)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   // Sorts a list of files in-place.
   function sortFiles(files) {
     files.sort((a, b) => {
@@ -86,7 +109,6 @@ window.SBDL = (function() {
   // Loads a Scratch 1 project
   function loadScratch1Project(id) {
     const PROJECTS_API = 'https://projects.scratch.mit.edu/internalapi/project/$id/get/';
-    const HEADER = 'ScratchV01';
 
     const result = {
       title: id.toString(),
@@ -100,15 +122,9 @@ window.SBDL = (function() {
     return fetch(PROJECTS_API.replace('$id', id))
       .then((data) => data.arrayBuffer())
       .then((buffer) => {
-
-        // Check that the header matches that of a Scratch 1 project.
-        const header = new Uint8Array(buffer.slice(0, HEADER.length));
-        for (let i = 0; i < HEADER.length; i++) {
-          if (header[i] !== HEADER.charCodeAt(i)) {
-            throw new Error('Failed header check, expected ' + HEADER.charCodeAt(i) + ' but got ' + header[i] + ' @ ' + i);
-          }
+        if (!checkMagic(buffer, SB_MAGIC)) {
+          throw new Error('Project is not a valid .sb file (failed magic check)');
         }
-
         result.buffer = buffer;
         return result;
       });
@@ -164,6 +180,14 @@ window.SBDL = (function() {
     return new Promise((resolve, reject) => {
       const fileReader = new FileReader();
       fileReader.onload = () => {
+        if (!checkMagic(fileReader.result, ZIP_MAGIC)) {
+          if (checkMagic(fileReader.result, SB_MAGIC)) {
+            reject(new ProjectFormatError('File is not a valid .sb2 (failed magic check)', 'sb'))
+          }
+          reject(new Error('File is not a valid .sb2 (failed magic check)'));
+          return;
+        }
+        
         resolve({
           title: id.toString(),
           extension: 'sb2',
@@ -197,7 +221,7 @@ window.SBDL = (function() {
 
     // sb2 files have two ways of storing references to files.
     // In the online editor they use md5 hashes which point to an API destination.
-    // In the offline editor they use separate accumlative file IDs for images and sounds.
+    // In the offline editor they use separate accumulative file IDs for images and sounds.
     // The files served from the Scratch API don't contain the file IDs we need to export a valid .sb2, so we must create those ourselves.
 
     let soundAccumulator = 0;
@@ -209,7 +233,7 @@ window.SBDL = (function() {
       return thing.md5 || thing.baseLayerMD5 || thing.penLayerMD5 || thing.toString();
     }
 
-    function claimAccumlatedID(extension) {
+    function claimAccumulatedID(extension) {
       if (IMAGE_EXTENSIONS.includes(extension)) {
         return imageAccumulator++;
       } else if (SOUND_EXTENSIONS.includes(extension)) {
@@ -224,20 +248,20 @@ window.SBDL = (function() {
 
       const md5 = asset.md5;
       const extension = asset.extension;
-      const accumlator = claimAccumlatedID(extension);
-      const path = accumlator + '.' + extension;
+      const accumulator = claimAccumulatedID(extension);
+      const path = accumulator + '.' + extension;
 
       // Update IDs in all references to match the accumulator
       // Downloaded projects usually use -1 for all of these, but sometimes they exist and are just wrong since we're redoing them all.
       for (const reference of asset.references) {
         if ('baseLayerID' in reference) {
-          reference.baseLayerID = accumlator;
+          reference.baseLayerID = accumulator;
         }
         if ('soundID' in reference) {
-          reference.soundID = accumlator;
+          reference.soundID = accumulator;
         }
         if ('penLayerID' in reference) {
-          reference.penLayerID = accumlator;
+          reference.penLayerID = accumulator;
         }
       }
 
@@ -337,7 +361,7 @@ window.SBDL = (function() {
       .then((request) => request.json())
       .then((projectData) => {
         if (typeof projectData.objName === 'string') {
-          throw new Error('Not a Scratch 3 project, found objName (probably a Scratch 2 project)');
+          throw new ProjectFormatError('Not a Scratch 3 project (found objName)', 'sb2');
         }
         if (!Array.isArray(projectData.targets)) {
           throw new Error('Not a Scratch 3 project, missing targets');

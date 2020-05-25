@@ -467,9 +467,9 @@
             console.error(err);
             let error = '\u274c Project is not available as a .' + type;
             if (err && err.message) {
-              if (err.message.includes('probably a Scratch 2 project')) {
-                error += ' (It is available as a .sb2)';
-              } else if (err.message.includes('404')) {
+              if (err.probableType) {
+                error += ' (It is available as a .' + err.probableType + ')';
+              } else if (err.message.includes('404') && type === 'sb3') {
                 error += ' (Project does not exist)';
               }
             }
