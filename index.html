@@ -151,7 +151,7 @@
     <input type="checkbox" id="asset-list-toggle"> Enable asset viewer
   </label>
   <div id="asset-list-container" hidden>
-    <i><small>Right click asset previews to save. Some projects cannot be previewed.</small></i>
+    <i><small>Some projects cannot be previewed.</small></i>
     <table width="100%">
       <thead>
         <tr>
@@ -368,8 +368,7 @@
           const path = file.path;
           const extension = path.split('.').pop();
 
-          const IMAGE_EXTENSIONS = ['png'];
-          const SVG_EXTENSIONS = ['svg'];
+          const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'svg'];
           const AUDIO_EXTENSIONS = ['mp3', 'wav'];
           const TEXT_EXTENSIONS = ['json'];
 
@@ -386,25 +385,12 @@
             }
 
             // Images are loaded by setting an <img> src to a Blob URL
-            const blob = new Blob([file.data], {type: 'image/' + extension});
+            const type = extension === 'svg' ? 'svg+xml' : extension;
+            const blob = new Blob([file.data], {type: 'image/' + type});
             const url = URL.createObjectURL(blob);
             const img = document.createElement('img');
             img.src = url;
             return img;
-          } else if (SVG_EXTENSIONS.includes(extension)) {
-            if (!(file.data instanceof ArrayBuffer)) {
-              return cannotPreview();
-            }
-
-            // SVGs are loaded by setting an <img> src to a data: URL for the SVG source
-            const image = document.createElement('img');
-            const source = bufferToString(file.data);
-            try {
-              image.src = 'data:image/svg+xml;base64,' + btoa(source);
-            } catch (e) {
-              return cannotPreview();
-            }
-            return image;
           } else if (AUDIO_EXTENSIONS.includes(extension)) {
             if (!(file.data instanceof ArrayBuffer)) {
               return cannotPreview();
