@@ -241,6 +241,10 @@
         const id = match ? match[0] : '';
 
         projectInput.value = 'https://scratch.mit.edu/projects/' + id;
+
+        resetAssets();
+        hideProgress();
+        removeDownloadLink();
       });
       function getId() {
         const match = projectInput.value.match(/\d+/);
@@ -422,13 +426,10 @@
 
       // Loads the currently input project
       function loadInput(id, type) {
-        if (downloadLinkEl.firstChild) {
-          downloadLinkEl.removeChild(downloadLinkEl.firstChild);
-        }
-
         setQuery('id', id);
         setQuery('type', type);
 
+        removeDownloadLink();
         disableInputs();
         resetAssets();
         resetProgress();
@@ -455,7 +456,6 @@
             setProgress(1);
           });
       }
-
       // Starts loading a project. Downloads it when complete.
       function downloadProject(id, type) {
         lastResult = null;
@@ -492,6 +492,11 @@
             downloadLinkEl.appendChild(a);
             a.click();
           });
+      }
+      function removeDownloadLink() {
+        if (downloadLinkEl.firstChild) {
+          downloadLinkEl.removeChild(downloadLinkEl.firstChild);
+        }
       }
 
       // Load URL parameters
