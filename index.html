@@ -232,24 +232,24 @@
 
       // Project ID input
       projectInput.addEventListener('focus', function() {
-        if (/\d+/.test(projectInput.value)) {
+        if (getId()) {
           projectInput.select();
         }
       })
       projectInput.addEventListener('input', function() {
-        const match = projectInput.value.match(/\d+/);
-        const id = match ? match[0] : '';
-
+        const id = getId() || '';
         projectInput.value = 'https://scratch.mit.edu/projects/' + id;
-
         setButtonsEnabled(!!id);
         resetAssets();
         hideProgress();
         removeDownloadLink();
       });
-      function getId() {
+      function extractId(input) {
         const match = projectInput.value.match(/\d+/);
-        return match ? match[0] : '';
+        return match ? match[0] : null;
+      }
+      function getId() {
+        return extractId(projectInput.value);
       }
 
       // Type input
@@ -514,7 +514,7 @@
           projectInput.selectionStart = projectInput.selectionEnd = projectInput.value.length;
         });
       }
-      setButtonsEnabled(!!projectInput.value.match(/\d+/));
+      setButtonsEnabled(!!getId());
       if (searchQuery.assets === 'on') {
         toggleAssets(true);
       }
