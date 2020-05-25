@@ -156,7 +156,7 @@ window.SBDL = (function() {
         return new Promise((resolve, reject) => {
           const fileReader = new FileReader();
           fileReader.onload = () => resolve(fileReader.result);
-          fileReader.onerror = () => reject('Cannot read blob as text');
+          fileReader.onerror = () => reject(new Error('Cannot read blob as text'));
           fileReader.readAsText(blob);
         });
       })
@@ -195,7 +195,7 @@ window.SBDL = (function() {
           buffer: fileReader.result,
         });
       };
-      fileReader.onerror = () => reject('Cannot read blob as array buffer');
+      fileReader.onerror = () => reject(new Error('Cannot read blob as array buffer'));
       fileReader.readAsArrayBuffer(blob);
     });
   }
@@ -414,7 +414,7 @@ window.SBDL = (function() {
     };
     type = type.toString();
     if (!(type in loaders)) {
-      return Promise.reject('Unknown type: ' + type);
+      return Promise.reject(new Error('Unknown type: ' + type));
     }
     return loaders[type](id);
   }
