@@ -21,7 +21,7 @@ window.SBDL = (function() {
     }
   }
 
-  const SB_MAGIC = 'ScratchV01';
+  const SB_MAGIC = 'ScratchV0';
   const ZIP_MAGIC = 'PK';
 
   const fetchQueue = {
