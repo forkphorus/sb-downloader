@@ -449,7 +449,12 @@
           })
           .catch((err) => {
             console.error(err);
-            let error = '\u274c Project is not available as a .' + type;
+            let error = '\u274c ';
+            if (err && err.name === 'CannotAccessProjectError') {
+              error += 'Project is unshared, never existed, or the ID is invalid.';
+            } else {
+              error += 'Project is not available as a .' + type;
+            }
             if (err && err.message) {
               if (err.probableType) {
                 error += ' (It is available as a .' + err.probableType + ')';
