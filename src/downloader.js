@@ -341,7 +341,37 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
 
 /**
  * @typedef ProjectMetadata
+ * @property {number} id
  * @property {string} title
+ * @property {string} description
+ * @property {string} instructions
+ * @property {string} visibility
+ * @property {boolean} public
+ * @property {boolean} comments_allowed
+ * @property {boolean} is_published
+ * @property {object} author
+ * @property {number} author.id
+ * @property {string} author.username
+ * @property {boolean} author.scratchteam
+ * @property {object} author.history
+ * @property {string} author.history.joined
+ * @property {object} author.profile
+ * @property {null} author.profile.id
+ * @property {Record<'90x90' | '60x60' | '55x55' | '50x50' | '32x32', string>} author.profile.images
+ * @property {string} image
+ * @property {Record<'282x218' | '216x163' | '200x200' | '144x108' | '135x102' | '100x80', string>} images
+ * @property {object} history
+ * @property {string} history.created
+ * @property {string} history.modified
+ * @property {string} history.shared
+ * @property {object} stats
+ * @property {number} stats.views
+ * @property {number} stats.loves
+ * @property {number} stats.favorites
+ * @property {number} stats.remixes
+ * @property {object} remix
+ * @property {number|null} remix.parent
+ * @property {number|null} remix.root
  * @property {string} project_token
  */
 
