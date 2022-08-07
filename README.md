@@ -20,20 +20,20 @@ import * as SBDL from '@turbowarp/sbdl';
 const SBDL = require('@turbowarp/sbdl');
 ```
 
-<!--
 Or if you just want your code to run in a browser, you can use a `<script>` tag:
 
 ```html
-<script src="TODO"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turbowarp/sbdl@2.0.0-alpha.2/lib/bundle-standalone.min.js"></script>
 <script>
   // .sb downloader is exported as `SBDL` on window
 </script>
 ```
--->
 
 Here's the API:
 
 ```js
+// We assume you've already loaded .sb downloader as `SBDL` using one of the methods listed above.
+
 // Optional options object.
 // If you don't need to specify any options, you can just not provide this object.
 const options = {
@@ -60,4 +60,16 @@ const arrayBuffer = project.arrayBuffer;
 // The title couldn't be found, this will be an empty string. It is your job to handle that and default to
 // a different title, such as the project ID.
 const title = project.title;
+
+// This method fetches the project's public data from api.scratch.mit.edu/projects/id.
+// We use it internally for fetching project tokens and titles. We export it in case you find it useful too.
+const metadata = await SBDL.getProjectMetadata('60917032');
 ```
+
+For a much more thorough example, see `index.html`.
+
+## Privacy
+
+In Node.js, .sb downloader will only talk directly to the Scratch API.
+
+In browsers, in order to access the project token and title, .sb downloader may send the project ID to a server under our control as it can't directly access certain Scratch APIs. The ID may be recorded for up to 24 hours for caching purposes only.
