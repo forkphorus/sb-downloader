@@ -54,14 +54,14 @@ const project = await SBDL.downloadProjectFromBinaryOrJSON(fs.readFileSync('proj
 // The output:
 // type is 'sb', 'sb2', or 'sb3'
 const type = project.type;
-// arrayBuffer is an ArrayBuffer of the compressed project data
+// arrayBuffer is an ArrayBuffer of the compressed project data in the format given by type.
 const arrayBuffer = project.arrayBuffer;
-// For projects loaded from an ID, title is the title of the project, if any, if the project is shared
-// The title couldn't be found, this will be an empty string. It is your job to handle that and default to
-// a different title, such as the project ID.
+// For shared projects loaded from an ID, this is the title of the project, if any.
+// If the title couldn't be found, this will be an empty string. It is your job to handle that and default to
+// something else such as the project's ID if necessary.
 const title = project.title;
 
-// This method fetches the project's public data from api.scratch.mit.edu/projects/id.
+// This method fetches the project's data from api.scratch.mit.edu/projects/id. Only works for shared projects.
 // We use it internally for fetching project tokens and titles. We export it in case you find it useful too.
 const metadata = await SBDL.getProjectMetadata('60917032');
 ```
