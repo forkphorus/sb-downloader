@@ -100,13 +100,11 @@
       .progress-outer {
         margin: 8px 0;
         position: relative;
-        top: 0;
-        left: 0;
         width: 100%;
-        height: 35px;
       }
       .progress-inner {
         position: absolute;
+        z-index: -1;
         top: 0;
         left: 0;
         width: 0;
@@ -121,18 +119,16 @@
         background-color: rgba(255, 0, 0, 0.372);
       }
       .progress-text {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
         height: 100%;
         display: flex;
         align-items: center;
-        margin-left: 4px;
+        padding: 2px 2px 2px 4px;
+        min-height: 35px;
       }
 
       .downloads-outer {
         margin: 8px 0;
+        text-align: center;
       }
     </style>
   </head>
@@ -162,7 +158,7 @@
         <button class="download-button download-legacy-button">
           <svg viewBox="0 0 48 48"><path d="M11 40q-1.2 0-2.1-.9Q8 38.2 8 37v-7.15h3V37h26v-7.15h3V37q0 1.2-.9 2.1-.9.9-2.1.9Zm13-7.65-9.65-9.65 2.15-2.15 6 6V8h3v18.55l6-6 2.15 2.15Z"/></svg>
           <div>
-            <div>Download "legacy version"</div>
+            <div>Download legacy version</div>
             <div><small>For pre-2019 projects - read below</small></div>
           </div>
         </button>
@@ -244,6 +240,12 @@
         const projectId = extractProjectId(e.target.value);
         e.target.value = projectId ? `${SCRATCH_PREFIX}${projectId}` : SCRATCH_PREFIX;
       });
+      projectInput.addEventListener('focus', (e) => {
+        const projectId = extractProjectId(e.target.value);
+        if (projectId) {
+          e.target.select();
+        }
+      });
 
       downloadLatestButton.addEventListener('click', () => {
         downloadProject(false);
@@ -269,7 +271,7 @@
         progressText.textContent = text;
       };
       const resetProgress = () => {
-        setProgress('⏳ Downloading project...', PROGRESS_STATE_WORKING, 0);
+        setProgress('⏳ Preparing...', PROGRESS_STATE_WORKING, 0);
       };
 
       const setControlsEnabled = (enabled) => {
@@ -302,7 +304,9 @@
 
           const progressCallback = (type, loaded, total) => {
             let text = type;
-            if (type === 'assets') {
+            if (type === 'project') {
+              text = `⏳ Downloads project data...`;
+            } else if (type === 'assets') {
               text = `⏳ Downloads assets (${loaded}/${total})...`;
               setProgress()
             } else if (type === 'compress') {

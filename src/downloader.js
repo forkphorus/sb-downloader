@@ -2,6 +2,7 @@ import JSZip from 'jszip';
 import fetch from 'cross-fetch';
 import {CannotAccessProjectError, HTTPError} from './errors';
 import fetchAsArrayBuffer from './safer-fetch';
+import fetchAsArrayBufferWithProgress from './fetch-with-progress';
 
 const ASSET_HOST = 'https://assets.scratch.mit.edu/internalapi/asset/$path/get/';
 
@@ -243,7 +244,7 @@ export const downloadProjectFromJSON = (json, progressTarget) => {
  * @param {PublicProgressCallback} progressCallback
  * @returns {Promise<DownloadedProject>}
  */
-export const downloadProjectFromBinaryOrJSON = async (data, progressCallback = () => {}) => {
+export const downloadProjectFromBinaryOrJSON = async (data, progressCallback) => {
   let type;
   let arrayBuffer;
 
@@ -345,11 +346,9 @@ export const getProjectToken = async (id) => {
  * @returns {Promise<DownloadedProject>}
  */
 export const downloadProjectFromURL = async (url, progressCallback) => {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new HTTPError(url, response.status);
-  }
-  const buffer = await response.arrayBuffer();
+  const buffer = await fetchAsArrayBufferWithProgress(url, (progress) => {
+    progressCallback('project', progress, 1);
+  });
   return downloadProjectFromBinaryOrJSON(buffer, progressCallback);
 };
 
@@ -368,13 +367,6 @@ export const downloadProjectFromID = async (id, progressCallback) => {
   }
   const tokenPart = token ? `?token=${token}` : '';
   const url = `https://projects.scratch.mit.edu/${id}${tokenPart}`;
-  const response = await fetch(url);
-  if (response.status === 404) {
-    throw new CannotAccessProjectError(id);
-  }
-  if (!response.ok) {
-    throw new HTTPError(url, response.status);
-  }
   return downloadProjectFromURL(url, progressCallback);
 };
 
