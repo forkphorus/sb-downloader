@@ -46,7 +46,7 @@
         background: transparent;
         font: inherit;
         width: 100%;
-        opacity: 0.5;
+        opacity: 0.6;
       }
       .project-input:focus {
         opacity: 1;
@@ -55,7 +55,7 @@
         color: inherit;
       }
       .project-input:disabled {
-        opacity: 0.8;
+        opacity: 0.6;
       }
 
       .download-buttons {
@@ -155,6 +155,39 @@
 
       <div class="project-input-outer">
         <input class="project-input" value="https://scratch.mit.edu/projects/" spellcheck="false" autocomplete="off">
+        <script>
+          // The script down below will take a bit to load. We have this separate script so the ID's input
+          // will have the correct state immediately.
+          window.InitialState = (function() {
+            /** @param {HTMLInputElement} el */
+            const moveCursorToEnd = (el) => {
+              el.selectionStart = el.value.length;
+              el.selectionEnd = el.value.length;
+            };
+
+            const projectInput = document.querySelector('.project-input');
+
+            const initialUrlParams = new URLSearchParams(location.search);
+            const initialProjectId = initialUrlParams.get('id');
+            // ?type=sb, ?type=sb2, ?type=sb3 is an old parameter
+            const initialType = initialUrlParams.get('type');
+            const initialLegacy = initialUrlParams.get('legacy') === 'true';
+            if (/^\d+$/.test(initialProjectId)) {
+              // We have an initial project ID
+              projectInput.value += initialProjectId;
+              projectInput.disabled = true;
+              const isLegacy = initialLegacy || initialType === 'sb' || initialType === 'sb2';
+              return {
+                isLegacy
+              };
+            }
+
+            // No initial project ID
+            projectInput.focus();
+            moveCursorToEnd(projectInput);
+            return null;
+          })();
+        </script>
       </div>
 
       <div class="download-buttons">
@@ -221,12 +254,6 @@
       import {downloadProjectFromID, downloadLegacyProjectFromID} from './src/export-web.js';
       import {version} from './package.json';
 
-      /** @param {HTMLInputElement} el */
-      const moveCursorToEnd = (el) => {
-        el.selectionStart = el.value.length;
-        el.selectionEnd = el.value.length;
-      };
-
       /**
        * @param {string} text
        * @returns {string|null}
@@ -253,8 +280,6 @@
       const PROGRESS_STATE_DONE = 'done';
       const PROGRESS_STATE_ERROR = 'error';
 
-      projectInput.focus();
-      moveCursorToEnd(projectInput);
       projectInput.addEventListener('input', (e) => {
         const projectId = extractProjectId(e.target.value);
         e.target.value = projectId ? `${SCRATCH_PREFIX}${projectId}` : SCRATCH_PREFIX;
@@ -370,18 +395,12 @@
         setControlsEnabled(true);
       };
 
-      const initialUrlParams = new URLSearchParams(location.search);
-      const initialProjectId = initialUrlParams.get('id');
-      // ?type=sb, ?type=sb2, ?type=sb3 is a legacy parameter
-      const initialType = initialUrlParams.get('type');
-      const initialLegacy = initialUrlParams.get('legacy') === 'true';
-      if (/^\d+$/.test(initialProjectId)) {
-        projectInput.value = `${SCRATCH_PREFIX}${initialProjectId}`;
-        const isLegacy = initialLegacy || initialType === 'sb' || initialType === 'sb2';
+      debugInfo.textContent = `v${version}`;
+
+      if (window.InitialState) {
+        const isLegacy = window.InitialState.isLegacy;
         downloadProject(isLegacy);
       }
-
-      debugInfo.textContent = `v${version}`;
     </script>
   </body>
 </html>
