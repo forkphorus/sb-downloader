@@ -409,6 +409,18 @@ export const downloadProjectFromID = async (id, options = getDefaultOptions()) =
  * @returns {Promise<DownloadedProject>}
  */
 export const downloadLegacyProjectFromID = async (id, options = getDefaultOptions()) => {
+  // Legacy API probably doesn't require token, so we can fetch the metadata in parallel with the project download.
   const url = `https://projects.scratch.mit.edu/internalapi/project/${id}/get/`;
-  return downloadProjectFromURL(url, options);
+  const [meta, project] = await Promise.all([
+    getProjectMetadata(id).catch((error) => {
+      // Ignore error
+      console.warn(error);
+      return null;
+    }),
+    downloadProjectFromURL(url, options),
+  ]);
+  if (meta && meta.title) {
+    project.title = meta.title;
+  }
+  return project;
 };
