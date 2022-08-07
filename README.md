@@ -11,13 +11,13 @@ You can use .sb downloader in your own programs with our brand new API that no l
 You can install it from npm:
 
 ```
-npm install sb-dl
+npm install @turbowarp/sbdl
 ```
 
 ```js
-import * as SBDL from 'sb-dl';
+import * as SBDL from '@turbowarp/sbdl';
 // or if you still use require():
-const SBDL = require('sb-dl');
+const SBDL = require('@turbowarp/sbdl');
 ```
 
 <!--
