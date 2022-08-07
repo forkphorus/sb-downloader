@@ -361,18 +361,12 @@
           console.error(e);
 
           let errorMessage = '❌ ';
-          let isUnexpected = false;
           if (e && e.name === 'CanNotAccessProjectError') {
             errorMessage += 'The project does not exist or the ID is invalid.'
           } else {
-            isUnexpected = true;
             errorMessage += e;
           }
           setProgress(errorMessage, PROGRESS_STATE_ERROR, 1);
-
-          if (isUnexpected) {
-            alert(e);
-          }
         }
 
         setControlsEnabled(true);
