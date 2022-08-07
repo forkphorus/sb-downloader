@@ -342,7 +342,7 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
 /**
  * @typedef ProjectMetadata
  * @property {string} title
- * @property {string} token
+ * @property {string} project_token
  */
 
 /**
@@ -397,7 +397,7 @@ export const downloadProjectFromID = async (id, options = getDefaultOptions()) =
     // This is okay for now.
     console.warn(e);
   }
-  const token = meta && meta.token;
+  const token = meta && meta.project_token;
   const title = meta && meta.title;
   const tokenPart = token ? `?token=${token}` : '';
   const url = `https://projects.scratch.mit.edu/${id}${tokenPart}`;
