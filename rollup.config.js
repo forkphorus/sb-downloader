@@ -1,5 +1,6 @@
 import commonjs from '@rollup/plugin-commonjs';
 import {nodeResolve} from '@rollup/plugin-node-resolve';
+import json from '@rollup/plugin-json';
 
 export default [
   {
@@ -9,7 +10,10 @@ export default [
       file: 'lib/bundle.js',
       format: 'cjs'
     },
-    external: ['jszip', 'cross-fetch']
+    external: ['jszip', 'cross-fetch'],
+    plugins: [
+      json()
+    ]
   },
   {
     // For use in a <script>
@@ -20,6 +24,7 @@ export default [
       name: 'SBDL'
     },
     plugins: [
+      json(),
       commonjs(),
       nodeResolve({
         browser: true
