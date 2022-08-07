@@ -143,6 +143,37 @@
         text-align: center;
       }
 
+      .asset-viewer-outer {
+        margin: 16px 0;
+        width: 100%;
+      }
+      .asset-viewer-id {
+        width: 100px;
+        min-width: 100px;
+      }
+      td.asset-viewer-id {
+        font-size: small;
+        text-align: center;
+        word-wrap: anywhere;
+      }
+      .asset-viewer-content {
+        width: 100%;
+        height: 100%;
+      }
+      .asset-viewer-content > textarea {
+        box-sizing: border-box;
+        width: 100%;
+        height: 100%;
+        min-height: 100px;
+      }
+      .asset-viewer-content > img {
+        max-width: 480px;
+        max-height: 360px;
+      }
+      .asset-viewer-row:hover img {
+        outline: 1px solid currentColor;
+      }
+
       .debug-info {
         opacity: 0.8;
         font-size: small;
@@ -237,6 +268,28 @@
         <a href="https://docs.turbowarp.org/unshared-projects">More information</a>.
       </p>
 
+      <h2>Asset viewer</h2>
+      <p class="asset-viewer-placeholder">
+        Load a project first to use the asset viewer.
+      </p>
+      <p class="asset-viewer-option-outer">
+        <label>
+          <input type="checkbox" class="asset-viewer-option" autocomplete="off">
+          Enable asset viewer
+        </label>
+      </p>
+      <p class="asset-viewer-not-supported">
+        Scratch 1 projects are not supported in the asset viewer.
+      </p>
+      <table class="asset-viewer-outer" hidden>
+        <thead>
+          <th class="asset-viewer-id">ID</th>
+          <th class="asset-viewer-content">Contents</th>
+        </thead>
+        <tbody class="asset-viewer-inner">
+        </tbody>
+      </table>
+
       <h2>Code</h2>
       <p>
         .sb downloader is <a href="https://github.com/forkphorus/sb-downloader">open source</a>.
@@ -259,6 +312,7 @@
     </main>
 
     <script type="module">
+      import JSZip from 'jszip';
       import {downloadProjectFromID, downloadLegacyProjectFromID} from './src/export-web.js';
       import {version} from './package.json';
 
@@ -281,12 +335,18 @@
       const progressInner = document.querySelector('.progress-inner');
       const progressText = document.querySelector('.progress-text');
       const downloadsOuter = document.querySelector('.downloads-outer');
+      const assetViewerPlaceholder = document.querySelector('.asset-viewer-placeholder');
+      const assetViewerOptionOuter = document.querySelector('.asset-viewer-option-outer');
+      const assetViewerOption = document.querySelector('.asset-viewer-option');
+      const assetViewerNotSupported = document.querySelector('.asset-viewer-not-supported');
+      const assetViewerOuter = document.querySelector('.asset-viewer-outer');
       const debugInfo = document.querySelector('.debug-info');
 
       const SCRATCH_PREFIX = 'https://scratch.mit.edu/projects/';
       const PROGRESS_STATE_WORKING = 'working';
       const PROGRESS_STATE_DONE = 'done';
       const PROGRESS_STATE_ERROR = 'error';
+      const ASSET_VIEWER_PROJECT_TYPES = ['sb2', 'sb3'];
 
       projectInput.addEventListener('input', (e) => {
         const projectId = extractProjectId(e.target.value);
@@ -304,6 +364,85 @@
       });
       downloadLegacyButton.addEventListener('click', () => {
         downloadProject(true);
+      });
+
+      const showAssetViewer = async (project) => {
+        const TEXT_EXTENSIONS = ['json'];
+        const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'bmp', 'webp'];
+        const SOUND_EXTENSIONS = ['mp3', 'wav', 'ogg'];
+
+        removeAssetViewerItems();
+
+        assetViewerOuter.hidden = false;
+
+        const assetViewerInner = document.createElement('tbody');
+        assetViewerInner.className = 'asset-viewer-inner';
+        assetViewerOuter.appendChild(assetViewerInner);
+
+        const zip = await JSZip.loadAsync(project.arrayBuffer);
+        for (const filename of Object.keys(zip.files)) {
+          const rowElement = document.createElement('tr');
+          rowElement.className = 'asset-viewer-row';
+          const idElement = document.createElement('td');
+          idElement.textContent = filename;
+          idElement.className = 'asset-viewer-id';
+          const contentElement = document.createElement('td');
+          contentElement.className = 'asset-viewer-content';
+          rowElement.appendChild(idElement);
+          rowElement.appendChild(contentElement);
+
+          const extension = filename.split('.').pop();
+
+          if (TEXT_EXTENSIONS.includes(extension)) {
+            const text = await zip.file(filename).async('text');
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.readOnly = true;
+            contentElement.appendChild(textarea);
+          } else if (IMAGE_EXTENSIONS.includes(extension)) {
+            const base64 = await zip.file(filename).async('base64');
+            const type = extension === 'svg' ? 'image/svg+xml' : `image/${extension}`;
+            const image = document.createElement('img');
+            image.src = `data:${type};base64,${base64}`;
+            contentElement.appendChild(image);
+          } else if (SOUND_EXTENSIONS.includes(extension)) {
+            const base64 = await zip.file(filename).async('base64');
+            const audio = document.createElement('audio');
+            audio.src = `data:;base64,${base64}`;
+            audio.controls = true;
+            audio.autoplay = false;
+            contentElement.appendChild(audio);
+          } else {
+            const errorMessage = document.createElement('div');
+            errorMessage.textContent = `Unknown extension: ${extension}`;
+          }
+
+          assetViewerInner.appendChild(rowElement);
+        }
+      };
+      const removeAssetViewerItems = () => {
+        const assetViewerInner = document.querySelector('.asset-viewer-inner');
+        if (assetViewerInner) {
+          // If the asset viewer is still being created, this won't stop its CPU work, but the result
+          // won't be displayed.
+          assetViewerInner.remove();
+        }
+      };
+      const resetAssetViewer = () => {
+        assetViewerOption.checked = false;
+        assetViewerPlaceholder.hidden = false;
+        assetViewerOptionOuter.hidden = true;
+        assetViewerNotSupported.hidden = true;
+        assetViewerOuter.hidden = true;
+        removeAssetViewerItems();
+      };
+
+      assetViewerOption.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          showAssetViewer(mostRecentProject);
+        } else {
+          removeAssetViewerItems();
+        }
       });
 
       const removeDownloadLinks = () => {
@@ -332,24 +471,29 @@
         projectInput.disabled = !enabled;
       };
 
+      let mostRecentProject = null;
+
       const downloadProject = async (legacy) => {
         const projectId = extractProjectId(projectInput.value);
         if (!projectId) {
           return;
         }
 
-        const urlParams = new URLSearchParams(location.search);
-        urlParams.set('id', projectId);
-        if (legacy) {
-          urlParams.set('legacy', 'true');
-        } else {
-          urlParams.delete('legacy');
-        }
-        // Remove a legacy parameter
-        urlParams.delete('type');
-        history.replaceState(null, null, `?${urlParams.toString()}`);
-
         try {
+          const urlParams = new URLSearchParams(location.search);
+          urlParams.set('id', projectId);
+          if (legacy) {
+            urlParams.set('legacy', 'true');
+          } else {
+            urlParams.delete('legacy');
+          }
+          // Remove a legacy parameter
+          urlParams.delete('type');
+          history.replaceState(null, null, `?${urlParams.toString()}`);
+
+          mostRecentProject = null;
+          resetAssetViewer();
+
           removeDownloadLinks();
           resetProgress();
           setControlsEnabled(false);
@@ -372,6 +516,7 @@
           };
           const downloadFunction = legacy ? downloadLegacyProjectFromID : downloadProjectFromID;
           const project = await downloadFunction(projectId, options);
+          mostRecentProject = project;
 
           const title = project.title ? `${project.title} (${projectId})` : projectId;
           const type = project.type;
@@ -386,6 +531,11 @@
           downloadElement.href = url;
           downloadsOuter.appendChild(downloadElement);
           downloadElement.click();
+
+          const assetViewerSupported = ASSET_VIEWER_PROJECT_TYPES.includes(type);
+          assetViewerPlaceholder.hidden = true;
+          assetViewerOptionOuter.hidden = !assetViewerSupported;
+          assetViewerNotSupported.hidden = assetViewerSupported;
 
           setProgress('✅ Done', PROGRESS_STATE_DONE, 1);
         } catch (e) {
