@@ -350,17 +350,37 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
  * @returns {Promise<ProjectMetadata>}
  */
 export const getProjectMetadata = async (id) => {
-  const url = (
+  const urls = (
     environment.canAccessScratchAPI ?
-    `https://api.scratch.mit.edu/projects/${id}` :
-    `https://trampoline.turbowarp.org/proxy/projects/${id}`
+    [
+      `https://api.scratch.mit.edu/projects/${id}`
+    ] :
+    [
+      `https://trampoline.turbowarp.org/proxy/projects/${id}`,
+      `https://trampoline.turbowarp.xyz/proxy/projects/${id}`,
+    ]
   );
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new CannotAccessProjectError(id);
+  let firstError = null;
+  for (const url of urls) {
+    try {
+      const response = await fetch(url);
+      if (response.status === 404) {
+        throw new CannotAccessProjectError(id);
+      }
+      if (!response.ok) {
+        throw new HTTPError(url, response.status);
+      }
+      const json = await response.json();
+      return json;
+    } catch (e) {
+      if (e instanceof CannotAccessProjectError) {
+        throw e;
+      } else {
+        firstError = e;
+      }
+    }
   }
-  const json = await res.json();
-  return json;
+  throw firstError;
 };
 
 /**
