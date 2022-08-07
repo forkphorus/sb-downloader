@@ -9,7 +9,7 @@
     <script>
       const button = document.querySelector('button');
       button.onclick = async () => {
-        const project = await SBDL.downloadProjectFromID('104', () => {});
+        const project = await SBDL.downloadProjectFromID('104');
         console.log(project);
       };
     </script>

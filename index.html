@@ -329,8 +329,11 @@
             setProgress(text, PROGRESS_STATE_WORKING, loaded / total);
           };
 
+          const options = {
+            onProgress: progressCallback
+          };
           const downloadFunction = legacy ? downloadLegacyProjectFromID : downloadProjectFromID;
-          const project = await downloadFunction(projectId, progressCallback);
+          const project = await downloadFunction(projectId, options);
 
           const title = project.title ? `${project.title} (${projectId})` : projectId;
           const type = project.type;

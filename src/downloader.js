@@ -14,7 +14,8 @@ const ASSET_HOST = 'https://assets.scratch.mit.edu/internalapi/asset/$path/get/'
  */
 
 /**
- * @typedef {Function} PublicProgressCallback
+ * @typedef Options
+ * @property {(type: 'project' | 'assets' | 'compress', loaded: number, total: number) => void} [onProgress]
  */
 
 /**
@@ -22,6 +23,11 @@ const ASSET_HOST = 'https://assets.scratch.mit.edu/internalapi/asset/$path/get/'
  * @property {(md5ext: string) => void} fetching
  * @property {(md5ext: string) => void} fetched
  */
+
+/**
+ * @returns {Options}
+ */
+const getDefaultOptions = () => ({});
 
 /**
  * Browser support for Array.prototype.flat is not to the level we want.
@@ -229,7 +235,7 @@ const identifyProjectTypeFromJSON = (projectData) => {
  * @param {InternalProgressTarget} progressTarget
  * @returns {Promise<JSZip>}
  */
-export const downloadProjectFromJSON = (json, progressTarget) => {
+const downloadProjectFromJSON = (json, progressTarget) => {
   const type = identifyProjectTypeFromJSON(json);
   if (type === 'sb3') {
     return downloadScratch3(json, progressTarget);
@@ -242,10 +248,10 @@ export const downloadProjectFromJSON = (json, progressTarget) => {
 
 /**
  * @param {ArrayBuffer} data
- * @param {PublicProgressCallback} progressCallback
+ * @param {Options} options
  * @returns {Promise<DownloadedProject>}
  */
-export const downloadProjectFromBinaryOrJSON = async (data, progressCallback) => {
+export const downloadProjectFromBinaryOrJSON = async (data, options = getDefaultOptions()) => {
   let type;
   let arrayBuffer;
 
@@ -253,7 +259,9 @@ export const downloadProjectFromBinaryOrJSON = async (data, progressCallback) =>
     type: 'arraybuffer',
     compression: 'DEFLATE'
   }, (meta) => {
-    progressCallback('compress', meta.percent / 100, 1);
+    if (options.onProgress) {
+      options.onProgress('compress', meta.percent / 100, 1);
+    }
   });
 
   const bufferView = new Uint8Array(data);
@@ -270,8 +278,8 @@ export const downloadProjectFromBinaryOrJSON = async (data, progressCallback) =>
       }
       timeout = setTimeout(() => {
         timeout = null;
-        if (!isDoneLoadingProject) {
-          progressCallback('assets', loadedAssets, totalAssets);
+        if (!isDoneLoadingProject && options.onProgress) {
+          options.onProgress('assets', loadedAssets, totalAssets);
         }
       });
     };
@@ -293,7 +301,9 @@ export const downloadProjectFromBinaryOrJSON = async (data, progressCallback) =>
     type = identifyProjectTypeFromJSON(json);
     const downloadedZip = await downloadProjectFromJSON(json, progressTarget);
 
-    progressCallback('assets', totalAssets, totalAssets);
+    if (options.onProgress) {
+      options.onProgress('assets', totalAssets, totalAssets);
+    }
     isDoneLoadingProject = true;
 
     arrayBuffer = await generateZip(downloadedZip);
@@ -350,29 +360,31 @@ export const getProjectMetadata = async (id) => {
 
 /**
  * @param {string} url
- * @param {PublicProgressCallback} progressCallback
+ * @param {Options} options
  * @returns {Promise<DownloadedProject>}
  */
-export const downloadProjectFromURL = async (url, progressCallback) => {
+export const downloadProjectFromURL = async (url, options = getDefaultOptions()) => {
   let buffer;
   try {
     buffer = await fetchAsArrayBufferWithProgress(url, (progress) => {
-      progressCallback('project', progress, 1);
+      if (options.onProgress) {
+        options('project', progress, 1);
+      }
     });
   } catch (e) {
     if (e instanceof HTTPError && e.status === 404) {
       throw new CannotAccessProjectError(e.message);
     }
   }
-  return downloadProjectFromBinaryOrJSON(buffer, progressCallback);
+  return downloadProjectFromBinaryOrJSON(buffer, options);
 };
 
 /**
  * @param {string} url
- * @param {PublicProgressCallback} progressCallback
+ * @param {Options} options
  * @returns {Promise<DownloadedProject>}
  */
-export const downloadProjectFromID = async (id, progressCallback) => {
+export const downloadProjectFromID = async (id, options = getDefaultOptions()) => {
   let meta;
   try {
     meta = await getProjectMetadata(id);
@@ -384,7 +396,7 @@ export const downloadProjectFromID = async (id, progressCallback) => {
   const title = meta && meta.title;
   const tokenPart = token ? `?token=${token}` : '';
   const url = `https://projects.scratch.mit.edu/${id}${tokenPart}`;
-  const project = await downloadProjectFromURL(url, progressCallback);
+  const project = await downloadProjectFromURL(url, options);
   if (title) {
     project.title = title;
   }
@@ -393,10 +405,10 @@ export const downloadProjectFromID = async (id, progressCallback) => {
 
 /**
  * @param {string} id
- * @param {PublicProgressCallback} progressCallback
+ * @param {Options} options
  * @returns {Promise<DownloadedProject>}
  */
-export const downloadLegacyProjectFromID = async (id, progressCallback) => {
+export const downloadLegacyProjectFromID = async (id, options = getDefaultOptions()) => {
   const url = `https://projects.scratch.mit.edu/internalapi/project/${id}/get/`;
-  return downloadProjectFromURL(url, progressCallback);
+  return downloadProjectFromURL(url, options);
 };
