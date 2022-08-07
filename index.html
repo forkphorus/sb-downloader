@@ -417,13 +417,13 @@
           // won't be displayed.
           assetViewerInner.remove();
         }
+        assetViewerOuter.hidden = true;
       };
       const resetAssetViewer = () => {
         assetViewerOption.checked = false;
         assetViewerPlaceholder.hidden = false;
         assetViewerOptionOuter.hidden = true;
         assetViewerNotSupported.hidden = true;
-        assetViewerOuter.hidden = true;
         removeAssetViewerItems();
       };
 
