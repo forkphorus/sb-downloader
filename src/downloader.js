@@ -3,6 +3,7 @@ import fetch from 'cross-fetch';
 import {CannotAccessProjectError, HTTPError} from './errors';
 import fetchAsArrayBuffer from './safer-fetch';
 import fetchAsArrayBufferWithProgress from './fetch-with-progress';
+import environment from './environment';
 
 const ASSET_HOST = 'https://assets.scratch.mit.edu/internalapi/asset/$path/get/';
 
@@ -348,9 +349,12 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
  * @returns {Promise<ProjectMetadata>}
  */
 export const getProjectMetadata = async (id) => {
-  // TODO: in node.js, talk to api.scratch.mit.edu directly
-  // TODO: retry with .xyz in case blocked
-  const res = await fetch(`https://trampoline.turbowarp.org/proxy/projects/${id}`);
+  const url = (
+    environment.canAccessScratchAPI ?
+    `https://api.scratch.mit.edu/projects/${id}` :
+    `https://trampoline.turbowarp.org/proxy/projects/${id}`
+  );
+  const res = await fetch(url);
   if (!res.ok) {
     throw new CannotAccessProjectError(id);
   }
