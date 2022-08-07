@@ -222,9 +222,9 @@ const downloadScratch3 = async (projectData, progressTarget) => {
  * @returns {'sb2'|'sb3'|null}
  */
 const identifyProjectTypeFromJSON = (projectData) => {
-  if ('targets' in projectData) {
+  if (Object.prototype.hasOwnProperty.call(projectData, 'targets')) {
     return 'sb3';
-  } else if ('objName' in projectData) {
+  } else if (Object.prototype.hasOwnProperty.call(projectData, 'objName')) {
     return 'sb2';
   }
   return null;
@@ -380,7 +380,7 @@ export const downloadProjectFromURL = async (url, options = getDefaultOptions())
 };
 
 /**
- * @param {string} url
+ * @param {string} id
  * @param {Options} options
  * @returns {Promise<DownloadedProject>}
  */
