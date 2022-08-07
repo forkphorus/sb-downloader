@@ -9,6 +9,7 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "declarationDir": "./lib/types/",
+    "rootDir": "./src/"
   },
   "include": [
     "./src/**/*"
