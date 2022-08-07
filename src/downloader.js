@@ -368,7 +368,7 @@ export const downloadProjectFromURL = async (url, options = getDefaultOptions())
   try {
     buffer = await fetchAsArrayBufferWithProgress(url, (progress) => {
       if (options.onProgress) {
-        options('project', progress, 1);
+        options.onProgress('project', progress, 1);
       }
     });
   } catch (e) {
