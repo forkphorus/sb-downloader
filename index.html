@@ -305,9 +305,9 @@
           const progressCallback = (type, loaded, total) => {
             let text = type;
             if (type === 'project') {
-              text = `⏳ Downloads project data...`;
+              text = `⏳ Downloading project data...`;
             } else if (type === 'assets') {
-              text = `⏳ Downloads assets (${loaded}/${total})...`;
+              text = `⏳ Downloading assets (${loaded}/${total})...`;
               setProgress()
             } else if (type === 'compress') {
               text = `⏳ Compressing project...`;
@@ -318,12 +318,13 @@
           const downloadFunction = legacy ? downloadLegacyProjectFromID : downloadProjectFromID;
           const project = await downloadFunction(projectId, progressCallback);
 
+          const title = project.title ? `${project.title} (${projectId})` : projectId;
           const type = project.type;
+          const name = `${title}.${type}`;
           const blob = new Blob([project.arrayBuffer]);
-
-          const url = URL.createObjectURL(blob);
-          const name = `${projectId}.${type}`;
           const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
+          const url = URL.createObjectURL(blob);
+
           const downloadElement = document.createElement('a');
           downloadElement.textContent = `Download ${name} (${sizeMB}MB)`;
           downloadElement.download = name;
@@ -338,7 +339,7 @@
           let errorMessage = '❌ ';
           let isUnexpected = false;
           if (e && e.name === 'CanNotAccessProjectError') {
-            errorMessage += ' The project is unshared, does not exist, or the ID is invalid.'
+            errorMessage += 'The project does not exist or the ID is invalid.'
           } else {
             isUnexpected = true;
             errorMessage += e;

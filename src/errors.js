@@ -12,9 +12,8 @@ export class HTTPError extends Error {
 }
 
 export class CannotAccessProjectError extends Error {
-  constructor (id) {
-    super(`Project with ID ${id} is unshared, never existed, or is an invalid ID`);
+  constructor (message) {
+    super(message);
     this.name = 'CanNotAccessProjectError';
-    this.id = id;
   }
 }

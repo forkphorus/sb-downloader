@@ -8,6 +8,7 @@ const ASSET_HOST = 'https://assets.scratch.mit.edu/internalapi/asset/$path/get/'
 
 /**
  * @typedef DownloadedProject
+ * @property {string} title
  * @property {'sb'|'sb2'|'sb3'} type
  * @property {ArrayBuffer} arrayBuffer
  */
@@ -320,16 +321,23 @@ export const downloadProjectFromBinaryOrJSON = async (data, progressCallback) =>
   }
 
   return {
+    title: '',
     type,
     arrayBuffer
   };
 };
 
 /**
- * @param {string} id
- * @returns {Promise<string|null>}
+ * @typedef ProjectMetadata
+ * @property {string} title
+ * @property {string} token
  */
-export const getProjectToken = async (id) => {
+
+/**
+ * @param {string} id
+ * @returns {Promise<ProjectMetadata>}
+ */
+export const getProjectMetadata = async (id) => {
   // TODO: in node.js, talk to api.scratch.mit.edu directly
   // TODO: retry with .xyz in case blocked
   const res = await fetch(`https://trampoline.turbowarp.org/proxy/projects/${id}`);
@@ -337,7 +345,7 @@ export const getProjectToken = async (id) => {
     throw new CannotAccessProjectError(id);
   }
   const json = await res.json();
-  return json.token;
+  return json;
 };
 
 /**
@@ -346,9 +354,16 @@ export const getProjectToken = async (id) => {
  * @returns {Promise<DownloadedProject>}
  */
 export const downloadProjectFromURL = async (url, progressCallback) => {
-  const buffer = await fetchAsArrayBufferWithProgress(url, (progress) => {
-    progressCallback('project', progress, 1);
-  });
+  let buffer;
+  try {
+    buffer = await fetchAsArrayBufferWithProgress(url, (progress) => {
+      progressCallback('project', progress, 1);
+    });
+  } catch (e) {
+    if (e instanceof HTTPError && e.status === 404) {
+      throw new CannotAccessProjectError(e.message);
+    }
+  }
   return downloadProjectFromBinaryOrJSON(buffer, progressCallback);
 };
 
@@ -358,16 +373,22 @@ export const downloadProjectFromURL = async (url, progressCallback) => {
  * @returns {Promise<DownloadedProject>}
  */
 export const downloadProjectFromID = async (id, progressCallback) => {
-  let token;
+  let meta;
   try {
-    token = await getProjectToken(id);
+    meta = await getProjectMetadata(id);
   } catch (e) {
     // This is okay for now.
     console.warn(e);
   }
+  const token = meta && meta.token;
+  const title = meta && meta.title;
   const tokenPart = token ? `?token=${token}` : '';
   const url = `https://projects.scratch.mit.edu/${id}${tokenPart}`;
-  return downloadProjectFromURL(url, progressCallback);
+  const project = await downloadProjectFromURL(url, progressCallback);
+  if (title) {
+    project.title = title;
+  }
+  return project;
 };
 
 /**
