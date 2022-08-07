@@ -26,6 +26,8 @@
     "jszip": "^3.10.1"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^22.0.2",
+    "@rollup/plugin-node-resolve": "^13.3.0",
     "@vitejs/plugin-legacy": "^2.0.0",
     "rollup": "^2.77.2",
     "terser": "^5.14.2",
