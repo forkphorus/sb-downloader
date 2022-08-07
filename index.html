@@ -154,7 +154,7 @@
       </p>
 
       <div class="project-input-outer">
-        <input class="project-input" value="https://scratch.mit.edu/projects/">
+        <input class="project-input" value="https://scratch.mit.edu/projects/" spellcheck="false" autocomplete="off">
       </div>
 
       <div class="download-buttons">
@@ -285,7 +285,7 @@
         progressText.textContent = text;
       };
       const resetProgress = () => {
-        setProgress('⏳ Preparing...', PROGRESS_STATE_WORKING, 0);
+        setProgress('⏳ Downloading project data...', PROGRESS_STATE_WORKING, 0);
       };
 
       const setControlsEnabled = (enabled) => {
@@ -319,12 +319,12 @@
           const progressCallback = (type, loaded, total) => {
             let text = type;
             if (type === 'project') {
-              text = `⏳ Downloading project data...`;
+              text = '⏳ Downloading project data...';
             } else if (type === 'assets') {
               text = `⏳ Downloading assets (${loaded}/${total})...`;
               setProgress()
             } else if (type === 'compress') {
-              text = `⏳ Compressing project...`;
+              text = '⏳ Compressing project...';
             }
             setProgress(text, PROGRESS_STATE_WORKING, loaded / total);
           };
