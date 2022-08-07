@@ -260,6 +260,13 @@
         }
       });
 
+      projectInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const params = new URLSearchParams(location.search);
+          const isLegacy = params.get('legacy') === 'true';
+          downloadProject(isLegacy);
+        }
+      });
       downloadLatestButton.addEventListener('click', () => {
         downloadProject(false);
       });
