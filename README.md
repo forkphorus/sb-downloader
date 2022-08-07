@@ -1,4 +1,4 @@
-# `.sb` downloader
+# .sb downloader
 
 https://forkphorus.github.io/sb-downloader/
 
