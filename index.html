@@ -1,534 +1,263 @@
 <!DOCTYPE html>
-<html>
-
-<head>
-  <title>.sb downloader</title>
-  <meta charset="utf8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="referrer" content="no-referrer">
-  <style>
-    /* basic styles to make things look nicer */
-    body {
-      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      width: 480px;
-      margin: 24px auto;
-    }
-    p {
-      margin: 8px 0 16px 0;
-    }
-    h1 {
-      font-size: 54px;
-      line-height: 72px;
-      margin: 0;
-    }
-    h2 {
-      font-size: 24px;
-      line-height: 32px;
-      margin: 16px 0 0 0;
-    }
-    h1, h2 {
-      font-weight: normal;
-    }
-    a {
-      color: #25d;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-    a:visited {
-      color: #73c;
-    }
-    a:active {
-      color: #03a;
-    }
-    code {
-      font-family: Menlo, Monaco, Consolas, Courier New, monospace;
-      background: #f1f1f1;
-      border-radius: 3px;
-      margin: 3px;
-      color: #000;
-    }
-
-    /* project ID input */
-    #project-select {
-      font-size: 24px;
-      line-height: 32px;
-      border: none;
-      width: 100%;
-      color: rgba(0, 0, 0, 0.4);
-    }
-    #project-select:focus {
-      color: rgba(0, 0, 0, 1);
-    }
-    #project-select:disabled {
-      background: white;
-    }
-
-    /* project type input */
-    #type-container {
-      width: 100%;
-      text-align: center;
-    }
-
-    :disabled {
-      cursor: not-allowed;
-    }
-
-    /* progress bar */
-    #progress-bar {
-      position: relative;
-      width: 100%;
-      height: 35px;
-      margin-top: 10px;
-    }
-    #progress-bar-fill {
-      position: absolute;
-      height: 100%;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      width: 0;
-      background-color: #cde;
-      transition: background-color 0.3s, width 0.3s;
-    }
-    #progress-bar-fill[state=error] {
-      background-color: #eaa;
-    }
-    #progress-bar-fill[state=success] {
-      background-color: #aea;
-    }
-    #progress-bar-text {
-      position: absolute;
-      top: 50%;
-      left: 5px;
-      transform: translateY(-50%);
-      z-index: 10;
-    }
-
-    /* asset list */
-    #asset-list-container {
-      margin-top: 10px;
-    }
-    #asset-list .name {
-      font-size: 10px;
-    }
-    #asset-list .preview {
-      max-width: 360px;
-    }
-    #asset-list {
-      text-align: center;
-    }
-    #asset-list:empty:after {
-      content: 'Nothing to preview';
-      font-style: italic;
-    }
-    #asset-list tr:hover td > * {
-      outline: 1px solid black;
-    }
-  </style>
-</head>
-
-<body>
-  <h1><code>.sb</code> downloader</h1>
-  <p><code>.sb</code> downloader downloads <a href="https://scratch.mit.edu/">Scratch</a> 1, 2, or 3 projects. Enter the project ID or URL then choose the format.</p>
-  <p><b>May 22, 2022 - It's possible that unshared projects will no longer be accessible using this tool in the future due to upcoming Scratch API changes. <a href="https://docs.turbowarp.org/unshared-projects">More information</a>.</b></p>
-
-  <input id="project-select" value="https://scratch.mit.edu/projects/">
-
-  <div id="type-container">
-    <b>Download project as</b>
-    <button class="download-button" data-type="sb">.sb</button>
-    <button class="download-button" data-type="sb2">.sb2</button>
-    <button class="download-button" data-type="sb3">.sb3</button>
-  </div>
-
-  <div id="progress-bar" hidden>
-    <div id="progress-bar-fill"></div>
-    <div id="progress-bar-text"></div>
-  </div>
-
-  <div id="download-link"></div>
-
-  <h2>Asset Viewer</h2>
-  <label>
-    <input type="checkbox" id="asset-list-toggle"> Enable asset viewer
-  </label>
-  <div id="asset-list-container" hidden>
-    <i><small>Some projects cannot be previewed.</small></i>
-    <table width="100%">
-      <thead>
-        <tr>
-          <th width="50%">Name</th>
-          <th width="50%">Preview</th>
-        </tr>
-      </thead>
-      <tbody id="asset-list">
-        <!-- javascript will insert the assets here -->
-      </tbody>
-    </table>
-  </div>
-
-  <h2>Code</h2>
-  <p><code>.sb</code> downloader is <a href="https://github.com/forkphorus/sb-downloader">open source</a>.</p>
-
-  <h2>Credits</h2>
-  <p>Thanks to <a href="https://scratch.mit.edu/">Scratch</a> for providing a sufficient public API. The general look of the downloader is inspired by <a href="https://phosphorus.github.io/">phosphorus</a>. The <a href="https://stuk.github.io/jszip/">JSZip</a> library is used for creating zip archives.</p>
-
-  <script src="jszip.min.js"></script>
-  <script src="loader.js"></script>
-  <script>
-    (function() {
-      'use strict';
-
-      // Element references
-
-      const projectInput = document.querySelector('#project-select');
-      const progressBarFill = document.querySelector('#progress-bar-fill');
-      const progressBarText = document.querySelector('#progress-bar-text');
-      const progressBarContainer = document.querySelector('#progress-bar');
-      const assetTableContainer = document.querySelector('#asset-list-container');
-      const assetTable = document.querySelector('#asset-list');
-      const assetTableToggle = document.querySelector('#asset-list-toggle');
-      const downloadLinkEl = document.querySelector('#download-link');
-      const downloadButtons = document.getElementsByClassName('download-button');
-
-      // The last loaded project, if any.
-      let lastResult = null;
-
-      // Returns an object containing all the query string parameters
-      function getQuery(queryString) {
-        queryString = queryString || window.location.search;
-        const query = {};
-        const pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
-        for (var i = 0; i < pairs.length; i++) {
-          const pair = pairs[i].split('=');
-          const key = decodeURIComponent(pair[0]);
-          const value = decodeURIComponent(pair[1] || '');
-          // If either key or value is empty, omit it.
-          if (key && value) {
-            query[key] = value;
-          }
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>.sb downloader 2.0</title>
+    <meta name="referrer" content="no-referrer">
+    <style>
+      main {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        width: 480px;
+        margin: 24px auto;
+      }
+      h1 {
+        text-align: center;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          background-color: #111;
+          color: #eee;
         }
-        return query;
+        a {
+          color: #4af;
+        }
       }
 
-      // Sets a query string value without reloading the page.
-      function setQuery(key, value) {
-        const query = getQuery();
-        query[key] = value;
-        let url = '?';
-        for (const key of Object.keys(query)) {
-          const value = query[key];
-          // omit parameters with empty keys or values
-          // allows '' as a value to remove a parameter
-          if (!key || !value) {
-            continue;
-          }
-          if (url.length > 1) {
-            url += '&';
-          }
-          url += encodeURIComponent(key) + '=' + encodeURIComponent(value);
-        }
-        history.replaceState({}, '', url);
+      .project-input-outer {
+        font-size: 24px;
+        line-height: 32px;
+      }
+      .project-input {
+        border: none;
+        background: transparent;
+        font: inherit;
+        width: 100%;
       }
 
-      // Project ID input
-      projectInput.addEventListener('focus', function() {
-        if (getId()) {
-          projectInput.select();
+      .progress-outer {
+        position: relative;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 35px;
+      }
+      .progress-inner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 100%;
+        background-color: rgba(0, 242, 255, 0.372);
+        transition: .2s width, .2s background-color;
+      }
+      .progress-inner[data-state="done"] {
+        background-color: rgba(30, 255, 0, 0.372);
+      }
+      .progress-inner[data-state="error"] {
+        background-color: rgba(255, 0, 0, 0.372);
+      }
+      .progress-text {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        margin-left: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>.sb downloader 2.0</h1>
+
+      <div class="project-input-outer">
+        <input class="project-input" value="https://scratch.mit.edu/projects/">
+      </div>
+
+      <button class="download-button">
+        Download project
+      </button>
+
+      <button class="download-legacy-button">
+        Download project (legacy)
+      </button>
+
+      <div class="progress-outer" hidden>
+        <div class="progress-inner"></div>
+        <div class="progress-text"></div>
+      </div>
+
+      <div class="downloads-outer"></div>
+
+      <h2>Code</h2>
+      <p>.sb downloader is <a href="https://github.com/forkphorus/sb-downloader">open source</a>.</p>
+
+      <h2>Credits</h2>
+      <p>.sb downloader is of course powered by the <a href="https://scratch.mit.edu/">Scratch</a> API. The <a href="https://stuk.github.io/jszip/">JSZip</a> library is used for creating zip archives.</p>
+    </main>
+
+    <script type="module">
+      import {downloadProjectFromID, downloadLegacyProjectFromID} from './src/downloader.js';
+
+      /** @param {HTMLInputElement} el */
+      const moveCursorToEnd = (el) => {
+        el.selectionStart = el.value.length;
+        el.selectionEnd = el.value.length;
+      };
+
+      /**
+       * @param {string} text
+       * @returns {string|null}
+       */
+      const extractProjectId = (text) => {
+        const match = text.match(/\d+/);
+        if (match) {
+          return match[0];
         }
-      })
-      projectInput.addEventListener('input', function() {
-        const id = getId() || '';
-        projectInput.value = 'https://scratch.mit.edu/projects/' + id;
-        setButtonsEnabled(!!id);
-        resetAssets();
-        hideProgress();
-        removeDownloadLink();
+        return null;
+      };
+
+      const projectInput = document.querySelector('.project-input');
+      const downloadButton = document.querySelector('.download-button');
+      const downloadLegacyButton = document.querySelector('.download-legacy-button');
+      const progressOuter = document.querySelector('.progress-outer');
+      const progressInner = document.querySelector('.progress-inner');
+      const progressText = document.querySelector('.progress-text');
+      const downloadsOuter = document.querySelector('.downloads-outer');
+
+      const SCRATCH_PREFIX = 'https://scratch.mit.edu/projects/';
+      const PROGRESS_STATE_WORKING = 'working';
+      const PROGRESS_STATE_DONE = 'done';
+      const PROGRESS_STATE_ERROR = 'error';
+
+      projectInput.value = SCRATCH_PREFIX;
+      projectInput.focus();
+      moveCursorToEnd(projectInput);
+      projectInput.addEventListener('input', (e) => {
+        const projectId = extractProjectId(e.target.value);
+        e.target.value = projectId ? `${SCRATCH_PREFIX}${projectId}` : SCRATCH_PREFIX;
       });
-      function extractId(input) {
-        const match = projectInput.value.match(/\d+/);
-        return match ? match[0] : null;
-      }
-      function getId() {
-        return extractId(projectInput.value);
-      }
 
-      // Type input
-      for (const button of downloadButtons) {
-        button.addEventListener('click', function() {
-          loadInput(getId(), button.dataset.type);
-        });
-      }
+      downloadButton.addEventListener('click', () => {
+        downloadProject(false);
+      });
+      downloadLegacyButton.addEventListener('click', () => {
+        downloadProject(true);
+      });
 
-      function setInputEnabled(enabled) {
+      const removeDownloadLinks = () => {
+        while (downloadsOuter.firstChild) {
+          const link = downloadsOuter.firstChild;
+          if (link.href) {
+            URL.revokeObjectURL(link.href);
+          }
+          link.remove();
+        }
+      };
+
+      const setProgress = (text, state, progress) => {
+        progressOuter.hidden = false;
+        progressInner.style.width = `${10 + progress * 90}%`;
+        progressInner.dataset.state = state;
+        progressText.textContent = text;
+      };
+      const resetProgress = () => {
+        setProgress('', PROGRESS_STATE_WORKING, 0);
+      };
+
+      const setControlsEnabled = (enabled) => {
+        downloadButton.disabled = !enabled;
+        downloadLegacyButton.disabled = !enabled;
         projectInput.disabled = !enabled;
-      }
-      function setButtonsEnabled(enabled) {
-        for (const el of downloadButtons) {
-          el.disabled = !enabled;
+      };
+
+      const downloadProject = async (legacy) => {
+        const projectId = extractProjectId(projectInput.value);
+        if (!projectId) {
+          return;
         }
-      }
-      function disableInputs() {
-        setInputEnabled(false);
-        setButtonsEnabled(false);
-      }
-      function enableInputs() {
-        setInputEnabled(true);
-        setButtonsEnabled(true);
-      }
 
-      // Progress bar methods
-
-      // Sets the current progress. Expects a number between 0 and 1
-      function setProgress(progress) {
-        progressBarFill.style.width = (10 + progress * 90) + '%';
-      }
-      // Resets the progress bar
-      function resetProgress() {
-        setProgress(0);
-        setProgressState('Loading...', '');
-      }
-      // Shows the progress bar
-      function showProgress() {
-        progressBarContainer.hidden = false;
-      }
-      // Hides the progress bar
-      function hideProgress() {
-        progressBarContainer.hidden = true;
-      }
-      // Sets the text and 'state' of the progress bar (usually changes color)
-      function setProgressState(message, state) {
-        progressBarText.textContent = message;
-        progressBarFill.setAttribute('state', state || '');
-      }
-
-      // Install progress hooks
-      let finishedTasks = 0;
-      let totalTasks = 0;
-      function updateProgressBarHooks() {
-        setProgress(finishedTasks / totalTasks);
-        setProgressState('\u23f3 Downloading project files (' + finishedTasks + '/' + totalTasks + ')');
-      }
-      SBDL.progressHooks.start = function() {
-        finishedTasks = 0;
-        totalTasks = 0;
-      };
-      SBDL.progressHooks.newTask = function() {
-        totalTasks++;
-        updateProgressBarHooks();
-      };
-      SBDL.progressHooks.finishTask = function() {
-        finishedTasks++;
-        updateProgressBarHooks();
-      };
-
-      // Asset listing
-      assetTableToggle.addEventListener('change', function(e) {
-        toggleAssets(e.target.checked);
-        e.preventDefault();
-      });
-      // Toggles the asset viewer. Might load or reset the asset list.
-      function toggleAssets(enabled) {
-        if (enabled) {
-          assetTableContainer.hidden = false;
-          setQuery('assets', 'on');
-          if (lastResult && lastResult.files) {
-            displayAssets(lastResult.files);
-          }
+        const urlParams = new URLSearchParams(location.search);
+        urlParams.set('id', projectId);
+        if (legacy) {
+          urlParams.set('legacy', 'true');
         } else {
-          assetTableContainer.hidden = true;
-          setQuery('assets', '');
-          resetAssets();
+          urlParams.delete('legacy');
         }
-        assetTableToggle.checked = enabled;
-      }
-      // Removes all existing assets in the list
-      function resetAssets() {
-        while (assetTable.firstChild) {
-          assetTable.removeChild(assetTable.firstChild);
-        }
-      }
-      // Displays a list of files
-      function displayAssets(files) {
-        resetAssets();
+        // Remove a legacy parameter
+        urlParams.delete('type');
+        history.replaceState(null, null, `?${urlParams.toString()}`);
 
-        // Used to decode text in bufferToString()
-        const decoder = new TextDecoder('utf8');
+        try {
+          removeDownloadLinks();
+          resetProgress();
+          setControlsEnabled(false);
 
-        function bufferToString(buffer) {
-          return decoder.decode(new Uint8Array(buffer));
-        }
+          const progressCallback = (type, loaded, total) => {
+            let text = type;
+            if (type === 'assets') {
+              text = `⏳ Downloads assets (${loaded}/${total})...`;
+              setProgress()
+            } else if (type === 'compress') {
+              text = `⏳ Compressing project...`;
+            }
+            setProgress(text, 'progress', loaded / total);
+          };
 
-        function getPreview(file) {
-          const path = file.path;
-          const extension = path.split('.').pop();
+          const downloadFunction = legacy ? downloadLegacyProjectFromID : downloadProjectFromID;
+          const project = await downloadFunction(projectId, progressCallback);
 
-          const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'svg'];
-          const AUDIO_EXTENSIONS = ['mp3', 'wav'];
-          const TEXT_EXTENSIONS = ['json'];
+          const type = project.type;
+          const blob = new Blob([project.arrayBuffer]);
 
-          // Returns an element indicating that this asset cannot be previewed.
-          function cannotPreview() {
-            const text = document.createElement('i');
-            text.textContent = 'cannot preview';
-            return text;
+          const url = URL.createObjectURL(blob);
+          const name = `${projectId}.${type}`;
+          const sizeMB = Math.round(blob.size / 1024 / 1024 * 100) / 100;
+          const downloadElement = document.createElement('a');
+          downloadElement.textContent = `Download ${name} (${sizeMB}MB)`;
+          downloadElement.download = name;
+          downloadElement.href = url;
+          downloadsOuter.appendChild(downloadElement);
+          downloadElement.click();
+
+          setProgress('✅ Done', PROGRESS_STATE_DONE, 1);
+        } catch (e) {
+          console.error(e);
+
+          let errorMessage = '❌ ';
+          let isUnexpected = false;
+          if (e && e.name === 'CanNotAccessProjectError') {
+            errorMessage += ' The project is unshared, does not exist, or the ID is invalid.'
+          } else {
+            isUnexpected = true;
+            errorMessage += e;
           }
+          setProgress(errorMessage, PROGRESS_STATE_ERROR, 1);
 
-          if (IMAGE_EXTENSIONS.includes(extension)) {
-            if (!(file.data instanceof ArrayBuffer)) {
-              return cannotPreview();
-            }
-
-            // Images are loaded by setting an <img> src to a Blob URL
-            const type = extension === 'svg' ? 'svg+xml' : extension;
-            const blob = new Blob([file.data], {type: 'image/' + type});
-            const url = URL.createObjectURL(blob);
-            const img = document.createElement('img');
-            img.src = url;
-            return img;
-          } else if (AUDIO_EXTENSIONS.includes(extension)) {
-            if (!(file.data instanceof ArrayBuffer)) {
-              return cannotPreview();
-            }
-
-            // Sounds are loaded by loading a Blob URL in an <audio> with controls enabled
-            const blob = new Blob([file.data]);
-            const url = URL.createObjectURL(blob);
-            const audio = document.createElement('audio');
-            audio.src = url;
-            // enabling controls ensures that it will be visible
-            audio.controls = true;
-            audio.autoplay = false;
-            return audio;
-          } else if (TEXT_EXTENSIONS.includes(extension)) {
-            // Text things are loaded using a readonly <textarea>
-            const textarea = document.createElement('textarea');
-            textarea.readOnly = true;
-            textarea.textContent = file.data;
-            return textarea;
+          if (isUnexpected) {
+            alert(e);
           }
-
-          return cannotPreview();
         }
 
-        for (const file of files) {
-          const row = document.createElement('tr');
+        setControlsEnabled(true);
+      };
 
-          const nameCell = document.createElement('td');
-          const previewCell = document.createElement('td');
-
-          nameCell.classList.add('name');
-          nameCell.appendChild(document.createTextNode(file.path));
-
-          previewCell.classList.add('preview');
-          previewCell.appendChild(getPreview(file));
-
-          row.appendChild(nameCell);
-          row.appendChild(previewCell);
-
-          assetTable.appendChild(row);
+      const initialUrlParams = new URLSearchParams(location.search);
+      const initialProjectId = initialUrlParams.get('id');
+      // ?type=sb, ?type=sb2, ?type=sb3 is a legacy parameter
+      const initialType = initialUrlParams.get('type');
+      const initialLegacy = initialUrlParams.get('legacy') === 'true';
+      if (/^\d+$/.test(initialProjectId)) {
+        projectInput.value = `${SCRATCH_PREFIX}${initialProjectId}`;
+        if (initialType || initialLegacy) {
+          const isLegacy = initialLegacy || initialType === 'sb' || initialType === 'sb2';
+          downloadProject(isLegacy);
         }
       }
-
-      // Loads the currently input project
-      function loadInput(id, type) {
-        setQuery('id', id);
-        setQuery('type', type);
-
-        removeDownloadLink();
-        disableInputs();
-        resetAssets();
-        resetProgress();
-        showProgress();
-
-        downloadProject(id, type)
-          .then(() => {
-            setProgressState('\u2705 Done', 'success');
-            enableInputs();
-            setProgress(1);
-          })
-          .catch((err) => {
-            console.error(err);
-            let error = '\u274c ';
-            if (err && err.name === 'CannotAccessProjectError') {
-              error += 'Project is unshared, never existed, or the ID is invalid.';
-            } else {
-              error += 'Project is not available as a .' + type;
-            }
-            if (err && err.message) {
-              if (err.probableType) {
-                error += ' (It is available as a .' + err.probableType + ')';
-              } else if (err.message.includes('404') && type === 'sb3') {
-                error += ' (Project does not exist)';
-              }
-            }
-            setProgressState(error, 'error');
-            enableInputs();
-            setProgress(1);
-          });
-      }
-      // Starts loading a project. Downloads it when complete.
-      function downloadProject(id, type) {
-        lastResult = null;
-        return SBDL.loadProject(id, type)
-          .then((r) => {
-            lastResult = r;
-
-            setProgressState('Creating archive...');
-
-            // Convert the result to a Blob so it's easier to download.
-            // The result can either give us a list of files to put in an archive, or an ArrayBuffer.
-            if (r.type === 'zip') {
-              return SBDL.createArchive(r.files, setProgress);
-            } else if (r.type === 'buffer') {
-              return new Blob([r.buffer]);
-            } else {
-              throw new Error('unknown type: ' + r.type);
-            }
-          })
-          .then((blob) => {
-            // Only display assets if there are some files to preview and they will be visible.
-            if (lastResult.files && !assetTableContainer.hidden) {
-              displayAssets(lastResult.files);
-            }
-
-            const url = URL.createObjectURL(blob);
-            const filename = lastResult.title + '.' + lastResult.extension;
-            const size = blob.size / 1024 / 1024;
-
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.textContent = 'Download ' + filename + ' (' + size.toFixed(2) + ' MiB)';
-            downloadLinkEl.appendChild(a);
-            a.click();
-          });
-      }
-      function removeDownloadLink() {
-        if (downloadLinkEl.firstChild) {
-          downloadLinkEl.removeChild(downloadLinkEl.firstChild);
-        }
-      }
-
-      // Load URL parameters
-      const searchQuery = getQuery();
-      if (searchQuery.id) {
-        projectInput.value = 'https://scratch.mit.edu/projects/' + searchQuery.id;
-      } else {
-        projectInput.focus();
-        setTimeout(function() {
-          projectInput.selectionStart = projectInput.selectionEnd = projectInput.value.length;
-        });
-      }
-      setButtonsEnabled(!!getId());
-      if (searchQuery.assets === 'on') {
-        toggleAssets(true);
-      }
-      if (searchQuery.id && searchQuery.type) {
-        loadInput(searchQuery.id, searchQuery.type);
-      }
-    }());
-  </script>
-</body>
-
+    </script>
+  </body>
 </html>
