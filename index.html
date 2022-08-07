@@ -173,11 +173,6 @@
       .asset-viewer-row:hover img {
         outline: 1px solid currentColor;
       }
-
-      .debug-info {
-        opacity: 0.8;
-        font-size: small;
-      }
     </style>
   </head>
   <body>
@@ -306,15 +301,11 @@
         In order to access the project token and title, .sb downloader may send the project ID to a server under our control as it can't directly access certain Scratch APIs.
         The ID may be recorded for up to 24 hours for caching purposes only.
       </p>
-
-      <!-- Will be filled in by JS later. Should have something inside so it doesn't cause the page's height to change later. -->
-      <p class="debug-info">&nbsp;</p>
     </main>
 
     <script type="module">
       import JSZip from 'jszip';
       import {downloadProjectFromID, downloadLegacyProjectFromID} from './src/export-web.js';
-      import {version} from './package.json';
 
       /**
        * @param {string} text
@@ -340,7 +331,6 @@
       const assetViewerOption = document.querySelector('.asset-viewer-option');
       const assetViewerNotSupported = document.querySelector('.asset-viewer-not-supported');
       const assetViewerOuter = document.querySelector('.asset-viewer-outer');
-      const debugInfo = document.querySelector('.debug-info');
 
       const SCRATCH_PREFIX = 'https://scratch.mit.edu/projects/';
       const PROGRESS_STATE_WORKING = 'working';
@@ -552,8 +542,6 @@
 
         setControlsEnabled(true);
       };
-
-      debugInfo.textContent = `v${version}`;
 
       if (window.InitialState) {
         const isLegacy = window.InitialState.isLegacy;
