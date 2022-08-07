@@ -32,7 +32,6 @@ const getDefaultOptions = () => ({});
 
 /**
  * Browser support for Array.prototype.flat is not to the level we want.
- * TODO: do we still care?
  * @param {unknown[]} array
  * @returns {unknown[]}
  */
@@ -327,7 +326,6 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
       throw new Error('project.json is missing');
     }
 
-    // TODO: see if this works when project.json not in root
     const projectDataText = await projectDataFile.async('text');
     const projectData = JSON.parse(projectDataText);
     type = identifyProjectTypeFromJSON(projectData);
