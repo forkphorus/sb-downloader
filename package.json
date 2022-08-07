@@ -16,7 +16,7 @@
   "homepage": "https://forkphorus.github.io/sb-downloader/",
   "main": "./lib/bundle-node.js",
   "browser": "./lib/bundle-web.js",
-  "types": "./lib/types/src/export.d.ts",
+  "types": "./lib/types/src/downloader.d.ts",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
