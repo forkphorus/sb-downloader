@@ -238,13 +238,16 @@ const identifyProjectTypeFromJSON = (projectData) => {
  */
 const downloadProjectFromJSON = (json, progressTarget) => {
   const type = identifyProjectTypeFromJSON(json);
+  if (!type) {
+    throw new Error('Could not identify type of project');
+  }
   if (type === 'sb3') {
     return downloadScratch3(json, progressTarget);
   } else if (type === 'sb2') {
     return downloadScratch2(json, progressTarget);
   }
-  // TODO: better error here
-  throw new Error('Unknown project type');
+  // Should never happen.
+  throw new Error(`Unknown project type: ${type}`);
 };
 
 /**
