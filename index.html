@@ -212,7 +212,8 @@
     </main>
 
     <script type="module">
-      import {downloadProjectFromID, downloadLegacyProjectFromID, version} from './src/export.js';
+      import {downloadProjectFromID, downloadLegacyProjectFromID} from './src/downloader.js';
+      import {version} from './package.json';
 
       /** @param {HTMLInputElement} el */
       const moveCursorToEnd = (el) => {
