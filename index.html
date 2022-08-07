@@ -81,6 +81,9 @@
       .download-button:not(:last-child) {
         margin-bottom: 16px;
       }
+      .download-button:active {
+        opacity: 0.8;
+      }
       .download-button:disabled {
         opacity: 0.5;
       }
@@ -122,13 +125,18 @@
         height: 100%;
         display: flex;
         align-items: center;
-        padding: 2px 2px 2px 4px;
+        padding: 2px 4px;
         min-height: 35px;
       }
 
       .downloads-outer {
         margin: 8px 0;
         text-align: center;
+      }
+
+      .debug-info {
+        opacity: 0.8;
+        font-size: small;
       }
     </style>
   </head>
@@ -199,10 +207,13 @@
         .sb downloader is of course powered by the <a href="https://scratch.mit.edu/">Scratch</a> API.
         The <a href="https://stuk.github.io/jszip/">JSZip</a> library is used for creating zip archives.
       </p>
+
+      <p class="debug-info"></p>
     </main>
 
     <script type="module">
       import {downloadProjectFromID, downloadLegacyProjectFromID} from './src/downloader.js';
+      import {version} from './package.json';
 
       /** @param {HTMLInputElement} el */
       const moveCursorToEnd = (el) => {
@@ -229,6 +240,7 @@
       const progressInner = document.querySelector('.progress-inner');
       const progressText = document.querySelector('.progress-text');
       const downloadsOuter = document.querySelector('.downloads-outer');
+      const debugInfo = document.querySelector('.debug-info');
 
       const SCRATCH_PREFIX = 'https://scratch.mit.edu/projects/';
       const PROGRESS_STATE_WORKING = 'working';
@@ -366,6 +378,8 @@
         const isLegacy = initialLegacy || initialType === 'sb' || initialType === 'sb2';
         downloadProject(isLegacy);
       }
+
+      debugInfo.textContent = `v${version}`;
     </script>
   </body>
 </html>
