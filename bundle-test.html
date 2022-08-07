@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+  </head>
+  <body>
+    <button>Download</button>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="lib/bundle.js"></script>
+    <script>
+      const button = document.querySelector('button');
+      button.onclick = async () => {
+        const project = await SBDL.downloadProjectFromID('104');
+        console.log(project);
+      };
+    </script>
+  </body>
+</html>
