@@ -145,20 +145,31 @@ const downloadScratch2 = (projectData, progressTarget) => {
 };
 
 /**
- * @param {object} projectData
+ * @typedef SB3Project
+ * @property {SB3Target[]} targets
+ */
+
+/**
+ * @typedef SB3Target
+ * @property {SB3Asset[]} sounds
+ * @property {SB3Asset[]} costumes
+ */
+
+/**
+ * @typedef SB3Asset Raw costume or sound data from an sb3 project.json.
+ * @property {string} assetId md5 checksum of the asset (eg. b7b7898cfcd9ba13e89a4e74dd56a1ff)
+ * @property {string} dataFormat file extension of the asset (eg. svg, wav)
+ * @property {string|undefined} md5ext dataFormat (eg. b7b7898cfcd9ba13e89a4e74dd56a1ff.svg)
+ * md5ext is not guaranteed to exist.
+ * There are additional properties that we don't care about.
+ */
+
+/**
+ * @param {SB3Project} projectData
  * @param {InternalProgressTarget} progressTarget
  * @returns {Promise<JSZip>}
  */
 const downloadScratch3 = async (projectData, progressTarget) => {
-  /**
-   * @typedef SB3Asset Raw costume or sound data from an sb3 project.json.
-   * @property {string} assetId md5 checksum of the asset (eg. b7b7898cfcd9ba13e89a4e74dd56a1ff)
-   * @property {string} dataFormat file extension of the asset (eg. svg, wav)
-   * @property {string|undefined} md5ext dataFormat (eg. b7b7898cfcd9ba13e89a4e74dd56a1ff.svg)
-   * md5ext is not guaranteed to exist.
-   * There are additional properties that we don't care about.
-   */
-
   const zip = new JSZip();
 
   /**
