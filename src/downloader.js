@@ -42,6 +42,8 @@ const throwIfAborted = (options) => {
   }
 };
 
+const isAbortError = (error) => error && error.name === 'AbortError';
+
 /**
  * Browser support for Array.prototype.flat is not to the level we want.
  * @param {unknown[]} array
@@ -443,9 +445,10 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
 
 /**
  * @param {string} id
+ * @param {Options} [signal]
  * @returns {Promise<ProjectMetadata>}
  */
-export const getProjectMetadata = async (id) => {
+export const getProjectMetadata = async (id, options = getDefaultOptions()) => {
   const urls = (
     environment.canAccessScratchAPI ?
     [
@@ -459,7 +462,9 @@ export const getProjectMetadata = async (id) => {
   let firstError = null;
   for (const url of urls) {
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        signal: options.signal
+      });
       if (response.status === 404) {
         throw new CannotAccessProjectError(id);
       }
@@ -469,7 +474,7 @@ export const getProjectMetadata = async (id) => {
       const json = await response.json();
       return json;
     } catch (e) {
-      if (e instanceof CannotAccessProjectError) {
+      if (e instanceof CannotAccessProjectError || isAbortError(e)) {
         throw e;
       } else {
         firstError = e;
@@ -508,7 +513,7 @@ export const downloadProjectFromURL = async (url, options = getDefaultOptions())
 export const downloadProjectFromID = async (id, options = getDefaultOptions()) => {
   let meta;
   try {
-    meta = await getProjectMetadata(id);
+    meta = await getProjectMetadata(id, options);
   } catch (e) {
     // This is okay for now.
     console.warn(e);
@@ -534,7 +539,7 @@ export const downloadLegacyProjectFromID = async (id, options = getDefaultOption
   // Legacy API probably doesn't require token, so we can fetch the metadata in parallel with the project download.
   const url = `https://projects.scratch.mit.edu/internalapi/project/${id}/get/`;
   const [meta, project] = await Promise.all([
-    getProjectMetadata(id).catch((error) => {
+    getProjectMetadata(id, options).catch((error) => {
       // Ignore error
       console.warn(error);
       return null;
