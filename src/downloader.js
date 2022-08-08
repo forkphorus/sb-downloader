@@ -18,6 +18,7 @@ const ASSET_HOST = 'https://assets.scratch.mit.edu/internalapi/asset/$path/get/'
  * @typedef Options
  * @property {(type: 'project' | 'assets' | 'compress', loaded: number, total: number) => void} [onProgress] Called periodically with progress updates.
  * @property {Date} [date] The date to use for the "last modified" time in generated projects. If not set, defaults to an arbitrary date in the past.
+ * @property {boolean} [compress] Whether to compress generated projects or not. Compressed projects take longer to generate but are much smaller. Defaults to true.
  */
 
 /**
@@ -298,7 +299,7 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
     }
     return zip.generateAsync({
       type: 'arraybuffer',
-      compression: 'DEFLATE'
+      compression: options.compress !== false ? 'DEFLATE' : 'STORE'
     }, (meta) => {
       if (options.onProgress) {
         options.onProgress('compress', meta.percent / 100, 1);

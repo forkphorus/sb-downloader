@@ -34,7 +34,6 @@ Here's the API:
 ```js
 // We assume you've already loaded .sb downloader as `SBDL` using one of the methods listed above.
 
-// Optional options object.
 // All properties are optional. In fact the entire object is optional.
 const options = {
   // May be called periodically with progress updates.
@@ -46,7 +45,12 @@ const options = {
   // The date to use as the "last modified" time for the files inside generated projects.
   // Defaults to an arbitrary time in the past.
   // Must be a `Date` object.
-  date: new Date()
+  date: new Date(),
+
+  // Whether to compress generated projects.
+  // Generated projects take longer to generate but are much smaller.
+  // Defaults to true.
+  compress: true
 };
 
 // Download using any of these methods.
