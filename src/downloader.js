@@ -67,10 +67,11 @@ const isScratch1Project = (uint8array) => {
 
 /**
  * @param {unknown} projectData
+ * @param {Options} options
  * @param {InternalProgressTarget} progressTarget
  * @returns {Promise<JSZip>}
  */
-const downloadScratch2 = (projectData, progressTarget) => {
+const downloadScratch2 = (projectData, options, progressTarget) => {
   const IMAGE_EXTENSIONS = ['svg', 'png', 'jpg', 'jpeg', 'bmp'];
   const SOUND_EXTENSIONS = ['wav', 'mp3'];
 
@@ -177,10 +178,11 @@ const downloadScratch2 = (projectData, progressTarget) => {
 
 /**
  * @param {SB3Project} projectData
+ * @param {Options}
  * @param {InternalProgressTarget} progressTarget
  * @returns {Promise<JSZip>}
  */
-const downloadScratch3 = async (projectData, progressTarget) => {
+const downloadScratch3 = async (projectData, options, progressTarget) => {
   const zip = new JSZip();
 
   /**
@@ -262,18 +264,19 @@ const identifyProjectTypeFromJSON = (projectData) => {
 
 /**
  * @param {object} json
+ * @param {Options} options
  * @param {InternalProgressTarget} progressTarget
  * @returns {Promise<JSZip>}
  */
-const downloadProjectFromJSON = (json, progressTarget) => {
+const downloadProjectFromJSON = (json, options, progressTarget) => {
   const type = identifyProjectTypeFromJSON(json);
   if (!type) {
     throw new Error('Could not identify type of project');
   }
   if (type === 'sb3') {
-    return downloadScratch3(json, progressTarget);
+    return downloadScratch3(json, options, progressTarget);
   } else if (type === 'sb2') {
-    return downloadScratch2(json, progressTarget);
+    return downloadScratch2(json, options, progressTarget);
   }
   // Should never happen.
   throw new Error(`Unknown project type: ${type}`);
@@ -342,7 +345,7 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
     const text = new TextDecoder().decode(data);
     const json = JSON.parse(text);
     type = identifyProjectTypeFromJSON(json);
-    const downloadedZip = await downloadProjectFromJSON(json, progressTarget);
+    const downloadedZip = await downloadProjectFromJSON(json, options, progressTarget);
 
     if (options.onProgress) {
       options.onProgress('assets', totalAssets, totalAssets);
