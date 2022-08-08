@@ -461,7 +461,9 @@
         progressOuter.hidden = false;
         progressInner.style.width = `${10 + progress * 90}%`;
         progressInner.dataset.state = state;
-        progressText.textContent = text;
+        if (progressText.textContent !== text) {
+          progressText.textContent = text;
+        }
       };
       const resetProgress = () => {
         setProgress('⏳ Downloading project metadata...', PROGRESS_STATE_WORKING, 0);
