@@ -16,7 +16,8 @@ const ASSET_HOST = 'https://assets.scratch.mit.edu/internalapi/asset/$path/get/'
 
 /**
  * @typedef Options
- * @property {(type: 'project' | 'assets' | 'compress', loaded: number, total: number) => void} [onProgress]
+ * @property {(type: 'project' | 'assets' | 'compress', loaded: number, total: number) => void} [onProgress] Called periodically with progress updates.
+ * @property {Date} [date] The date to use for the "last modified" time in generated projects. If not set, defaults to an arbitrary date in the past.
  */
 
 /**
@@ -286,14 +287,24 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
   let type;
   let arrayBuffer;
 
-  const generateZip = (zip) => zip.generateAsync({
-    type: 'arraybuffer',
-    compression: 'DEFLATE'
-  }, (meta) => {
-    if (options.onProgress) {
-      options.onProgress('compress', meta.percent / 100, 1);
+  /**
+   * @param {JSZip} zip
+   * @returns {Promise<ArrayBuffer>}
+   */
+  const generateZip = (zip) => {
+    const date = options.date || new Date('Fri, 31 Dec 2021 00:00:00 GMT');
+    for (const file of Object.values(zip.files)) {
+      file.date = date;
     }
-  });
+    return zip.generateAsync({
+      type: 'arraybuffer',
+      compression: 'DEFLATE'
+    }, (meta) => {
+      if (options.onProgress) {
+        options.onProgress('compress', meta.percent / 100, 1);
+      }
+    });
+  };
 
   const bufferView = new Uint8Array(data);
   if (bufferView[0] === '{'.charCodeAt(0)) {

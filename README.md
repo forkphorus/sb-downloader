@@ -35,13 +35,18 @@ Here's the API:
 // We assume you've already loaded .sb downloader as `SBDL` using one of the methods listed above.
 
 // Optional options object.
-// If you don't need to specify any options, you can just not provide this object.
+// All properties are optional. In fact the entire object is optional.
 const options = {
   // May be called periodically with progress updates.
   onProgress: (type, loaded, total) => {
     // type is either 'project', 'assets', or 'compress'
     console.log(type, loaded / total);
-  }
+  },
+
+  // The date to use as the "last modified" time for the files inside generated projects.
+  // Defaults to an arbitrary time in the past.
+  // Must be a `Date` object.
+  date: new Date()
 };
 
 // Download using any of these methods.
