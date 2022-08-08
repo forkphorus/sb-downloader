@@ -277,6 +277,7 @@
       <h2>Code</h2>
       <p>
         .sb downloader is <a href="https://github.com/forkphorus/sb-downloader">open source</a>.
+        There is an easy-to-use API.
       </p>
 
       <h2>Credits</h2>
@@ -312,7 +313,13 @@
        * @param {URLSearchParams} params
        */
       const replaceParameters = (params) => {
-        history.replaceState('', '', `?${params.toString()}`);
+        const stringified = params.toString();
+        // If there are no parameters, remove the query entirely
+        if (stringified) {
+          history.replaceState('', '', `?${stringified}`);
+        } else {
+          history.replaceState('', '', location.pathname);
+        }
       };
 
       const projectInput = document.querySelector('.project-input');
@@ -477,6 +484,7 @@
       const downloadProject = async (legacy) => {
         const projectId = extractProjectId(projectInput.value);
         if (!projectId) {
+          alert('Paste a project ID or URL into the input above first.');
           return;
         }
 
