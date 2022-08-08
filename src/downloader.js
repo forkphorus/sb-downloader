@@ -508,6 +508,7 @@ export const downloadProjectFromURL = async (url, options) => {
     if (e instanceof HTTPError && e.status === 404) {
       throw new CannotAccessProjectError(e.message);
     }
+    throw e;
   }
   return downloadProjectFromBinaryOrJSON(buffer, options);
 };
