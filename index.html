@@ -109,7 +109,7 @@
         z-index: -1;
         top: 0;
         left: 0;
-        width: 0;
+        width: 10%;
         height: 100%;
         background-color: rgba(0, 242, 255, 0.372);
         transition: .2s width, .2s background-color;
@@ -231,8 +231,16 @@
 
       <div class="progress-outer" hidden>
         <div class="progress-inner"></div>
-        <div class="progress-text"></div>
+        <div class="progress-text">⏳ Downloading project metadata...</div>
       </div>
+      <script>
+        (function() {
+          const progressOuter = document.querySelector('.progress-outer');
+          if (window.InitialState) {
+            progressOuter.hidden = false;
+          }
+        })();
+      </script>
 
       <div class="downloads-outer"></div>
 
