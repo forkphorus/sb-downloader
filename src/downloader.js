@@ -100,8 +100,11 @@ const downloadScratch2 = (projectData, progressTarget) => {
     return fetchAsArrayBuffer(ASSET_HOST.replace('$path', md5ext))
       .then((arrayBuffer) => {
         const path = `${id}.${getExtension(md5ext)}`;
-        zip.file(path, arrayBuffer);
         progressTarget.fetched(md5ext);
+        return {
+          path,
+          data: arrayBuffer
+        };
       });
   };
 
@@ -137,9 +140,15 @@ const downloadScratch2 = (projectData, progressTarget) => {
   const costumes = flat(targets.map((i) => i.costumes || []));
   const sounds = flat(targets.map((i) => i.sounds || []));
   return downloadAssets([...costumes, ...sounds])
-    .then(() => {
-      // Project JSON is mutated during loading, so add it at the e nd.
+    .then((filesToAdd) => {
+      // Project JSON is mutated during loading, so add it at the end.
       zip.file('project.json', JSON.stringify(projectData));
+
+      // Add files to the zip at the end so the order will be consistent.
+      for (const {path, data} of filesToAdd) {
+        zip.file(path, data);
+      }
+
       return zip;
     });
 };
@@ -213,8 +222,11 @@ const downloadScratch3 = async (projectData, progressTarget) => {
 
     const buffer = await fetchAsArrayBuffer(ASSET_HOST.replace('$path', md5ext));
 
-    zip.file(md5ext, buffer);
     progressTarget.fetched(md5ext);
+    return {
+      path: md5ext,
+      data: buffer
+    };
   };
 
   zip.file('project.json', JSON.stringify(projectData));
@@ -223,7 +235,12 @@ const downloadScratch3 = async (projectData, progressTarget) => {
   const costumes = flat(targets.map((t) => t.costumes || []));
   const sounds = flat(targets.map((t) => t.sounds || []));
   const assets = prepareAssets([...costumes, ...sounds]);
-  await Promise.all(assets.map(addFile));
+  const filesToAdd = await Promise.all(assets.map(addFile));
+
+  // Add files to the zip at the end so the order will be consistent.
+  for (const {path, data} of filesToAdd) {
+    zip.file(path, data);
+  }
 
   return zip;
 };
