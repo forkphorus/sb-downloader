@@ -319,6 +319,13 @@
         return null;
       };
 
+      /**
+       * @param {URLSearchParams} params
+       */
+      const replaceParameters = (params) => {
+        history.replaceState('', '', `?${params.toString()}`);
+      };
+
       const projectInput = document.querySelector('.project-input');
       const downloadLatestButton = document.querySelector('.download-latest-button');
       const downloadLegacyButton = document.querySelector('.download-legacy-button');
@@ -339,6 +346,14 @@
       const ASSET_VIEWER_PROJECT_TYPES = ['sb2', 'sb3'];
 
       projectInput.addEventListener('input', (e) => {
+        removeDownloadLinks();
+        hideProgress();
+        resetAssetViewer();
+
+        const params = new URLSearchParams(location.search);
+        params.delete('id');
+        replaceParameters(params);
+
         const projectId = extractProjectId(e.target.value);
         e.target.value = projectId ? `${SCRATCH_PREFIX}${projectId}` : SCRATCH_PREFIX;
       });
@@ -454,6 +469,9 @@
       const resetProgress = () => {
         setProgress('⏳ Downloading project metadata...', PROGRESS_STATE_WORKING, 0);
       };
+      const hideProgress = () => {
+        progressOuter.hidden = true;
+      };
 
       const setControlsEnabled = (enabled) => {
         downloadLatestButton.disabled = !enabled;
@@ -479,7 +497,7 @@
           }
           // Remove a legacy parameter
           urlParams.delete('type');
-          history.replaceState(null, null, `?${urlParams.toString()}`);
+          replaceParameters(urlParams);
 
           mostRecentProject = null;
           resetAssetViewer();
