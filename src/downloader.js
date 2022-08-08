@@ -5,8 +5,6 @@ import fetchAsArrayBuffer from './safer-fetch';
 import fetchAsArrayBufferWithProgress from './fetch-with-progress';
 import environment from './environment';
 
-const ASSET_HOST = 'https://assets.scratch.mit.edu/internalapi/asset/$path/get/';
-
 /**
  * @typedef DownloadedProject
  * @property {string} title
@@ -20,6 +18,7 @@ const ASSET_HOST = 'https://assets.scratch.mit.edu/internalapi/asset/$path/get/'
  * @property {Date} [date] The date to use for the "last modified" time in generated projects. If not set, defaults to an arbitrary date in the past.
  * @property {boolean} [compress] Whether to compress generated projects or not. Compressed projects take longer to generate but are much smaller. Defaults to true.
  * @property {AbortSignal} [signal] An AbortSignal that can be used to cancel the download.
+ * @property {string} [assetHost] The URL from which to download assets from. $id is replaced with the asset ID (md5ext).
  */
 
 /**
@@ -29,9 +28,13 @@ const ASSET_HOST = 'https://assets.scratch.mit.edu/internalapi/asset/$path/get/'
  */
 
 /**
+ * @param {Options} givenOptions
  * @returns {Options}
  */
-const getDefaultOptions = () => ({});
+const parseOptions = (givenOptions) => Object.assign({
+  // Default asset host for scratch.mit.edu
+  assetHost: 'https://assets.scratch.mit.edu/internalapi/asset/$id/get/'
+}, givenOptions || {});
 
 /**
  * @param {Options} options
@@ -112,7 +115,8 @@ const downloadScratch2 = (projectData, options, progressTarget) => {
 
   const fetchAndStoreAsset = (md5ext, id) => {
     progressTarget.fetching(md5ext);
-    return fetchAsArrayBuffer(ASSET_HOST.replace('$path', md5ext))
+    // assetHost will never be undefined here because of parseOptions()
+    return fetchAsArrayBuffer(options.assetHost.replace('$id', md5ext))
       .then((arrayBuffer) => {
         const path = `${id}.${getExtension(md5ext)}`;
         progressTarget.fetched(md5ext);
@@ -190,7 +194,7 @@ const downloadScratch2 = (projectData, options, progressTarget) => {
 
 /**
  * @param {SB3Project} projectData
- * @param {Options}
+ * @param {Options} options
  * @param {InternalProgressTarget} progressTarget
  * @returns {Promise<JSZip>}
  */
@@ -236,7 +240,8 @@ const downloadScratch3 = async (projectData, options, progressTarget) => {
     const md5ext = data.md5ext;
     progressTarget.fetching(md5ext);
 
-    const buffer = await fetchAsArrayBuffer(ASSET_HOST.replace('$path', md5ext), {
+    // assetHost will never be undefined here because of parseOptions()
+    const buffer = await fetchAsArrayBuffer(options.assetHost.replace('$id', md5ext), {
       signal: options.signal
     });
 
@@ -301,7 +306,7 @@ const downloadProjectFromJSON = (json, options, progressTarget) => {
  * @param {Options} options
  * @returns {Promise<DownloadedProject>}
  */
-export const downloadProjectFromBinaryOrJSON = async (data, options = getDefaultOptions()) => {
+export const downloadProjectFromBinaryOrJSON = async (data, options = parseOptions()) => {
   let type;
   let arrayBuffer;
 
@@ -445,10 +450,11 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
 
 /**
  * @param {string} id
- * @param {Options} [signal]
+ * @param {Options} [options]
  * @returns {Promise<ProjectMetadata>}
  */
-export const getProjectMetadata = async (id, options = getDefaultOptions()) => {
+export const getProjectMetadata = async (id, options) => {
+  options = parseOptions(options);
   const urls = (
     environment.canAccessScratchAPI ?
     [
@@ -486,10 +492,11 @@ export const getProjectMetadata = async (id, options = getDefaultOptions()) => {
 
 /**
  * @param {string} url
- * @param {Options} options
+ * @param {Options} [options]
  * @returns {Promise<DownloadedProject>}
  */
-export const downloadProjectFromURL = async (url, options = getDefaultOptions()) => {
+export const downloadProjectFromURL = async (url, options) => {
+  options = parseOptions(options);
   let buffer;
   try {
     buffer = await fetchAsArrayBufferWithProgress(url, (progress) => {
@@ -507,10 +514,11 @@ export const downloadProjectFromURL = async (url, options = getDefaultOptions())
 
 /**
  * @param {string} id
- * @param {Options} options
+ * @param {Options} [options]
  * @returns {Promise<DownloadedProject>}
  */
-export const downloadProjectFromID = async (id, options = getDefaultOptions()) => {
+export const downloadProjectFromID = async (id, options) => {
+  options = parseOptions(options);
   let meta;
   try {
     meta = await getProjectMetadata(id, options);
@@ -532,10 +540,11 @@ export const downloadProjectFromID = async (id, options = getDefaultOptions()) =
 
 /**
  * @param {string} id
- * @param {Options} options
+ * @param {Options} [options]
  * @returns {Promise<DownloadedProject>}
  */
-export const downloadLegacyProjectFromID = async (id, options = getDefaultOptions()) => {
+export const downloadLegacyProjectFromID = async (id, options) => {
+  options = parseOptions(options);
   // Legacy API probably doesn't require token, so we can fetch the metadata in parallel with the project download.
   const url = `https://projects.scratch.mit.edu/internalapi/project/${id}/get/`;
   const [meta, project] = await Promise.all([

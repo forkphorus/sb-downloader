@@ -29,7 +29,7 @@ Or if you just want your code to run in a browser, you can use a `<script>` tag:
 </script>
 ```
 
-Here's the API:
+Here's the primary parts of the API:
 
 ```js
 // We assume you've already loaded .sb downloader as `SBDL` using one of the methods listed above.
@@ -95,6 +95,19 @@ setTimeout(() => {
 ```
 
 If you absolutely need to cancel all activity immediately, you can download projects from a Worker instead, which will also prevent downloading from causing slowdowns on the main thread.
+
+.sb downloader is compatible with most Scratch 3 forks as long as they haven't deviated too far.
+
+```js
+const options = {
+  // $id is will be replaced with the asset ID (md5ext)
+  // The URL to use will vary for each mod. Use developer tools to find it.
+  assetHost: 'https://assets.example.com/$id'
+};
+// Use downloadProjectFromURL or fetch it yourself and use downloadProjectFromBinaryOrJSON
+// The URL to use will vary for each mod. Use developer tools to find it.
+const project = await SBDL.downloadProjectFromURL(`https://projects.example.com/${id}`);
+```
 
 For a much more thorough example, see `index.html`.
 
