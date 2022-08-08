@@ -32,10 +32,6 @@
         }
       }
 
-      :disabled {
-        cursor: not-allowed;
-      }
-
       .project-input-outer {
         margin: 16px 0;
         font-size: 24px;
@@ -51,11 +47,8 @@
       .project-input:focus {
         opacity: 1;
       }
-      .project-input, .project-input:disabled {
+      .project-input {
         color: inherit;
-      }
-      .project-input:disabled {
-        opacity: 0.6;
       }
 
       .download-buttons {
@@ -86,9 +79,6 @@
       }
       .download-button:active {
         opacity: 0.8;
-      }
-      .download-button:disabled {
-        opacity: 0.5;
       }
       .download-latest-button {
         background: #4C97FF;
@@ -210,7 +200,6 @@
             if (/^\d+$/.test(initialProjectId)) {
               // We have an initial project ID
               projectInput.value += initialProjectId;
-              projectInput.disabled = true;
               const isLegacy = initialLegacy || initialType === 'sb' || initialType === 'sb2';
               return {
                 isLegacy
@@ -349,6 +338,7 @@
         removeDownloadLinks();
         hideProgress();
         resetAssetViewer();
+        cancelOngoingDownload();
 
         const params = new URLSearchParams(location.search);
         params.delete('id');
@@ -473,13 +463,16 @@
         progressOuter.hidden = true;
       };
 
-      const setControlsEnabled = (enabled) => {
-        downloadLatestButton.disabled = !enabled;
-        downloadLegacyButton.disabled = !enabled;
-        projectInput.disabled = !enabled;
-      };
-
       let mostRecentProject = null;
+      /** @type {AbortController} */
+      let globalAbortController = null;
+
+      const cancelOngoingDownload = () => {
+        if (globalAbortController) {
+          globalAbortController.abort();
+          globalAbortController = null;
+        }
+      };
 
       const downloadProject = async (legacy) => {
         const projectId = extractProjectId(projectInput.value);
@@ -488,6 +481,10 @@
         }
 
         try {
+          cancelOngoingDownload();
+          const localAbortController = new AbortController();
+          globalAbortController = localAbortController;
+
           const urlParams = new URLSearchParams(location.search);
           urlParams.set('id', projectId);
           if (legacy) {
@@ -504,7 +501,6 @@
 
           removeDownloadLinks();
           resetProgress();
-          setControlsEnabled(false);
 
           const progressCallback = (type, loaded, total) => {
             let text = type;
@@ -520,8 +516,10 @@
           };
 
           const options = {
-            onProgress: progressCallback
+            onProgress: progressCallback,
+            signal: globalAbortController.signal
           };
+
           const downloadFunction = legacy ? downloadLegacyProjectFromID : downloadProjectFromID;
           const project = await downloadFunction(projectId, options);
           mostRecentProject = project;
@@ -546,8 +544,14 @@
           assetViewerNotSupported.hidden = assetViewerSupported;
 
           setProgress('✅ Done', PROGRESS_STATE_DONE, 1);
+
+          globalAbortController = null;
         } catch (e) {
           console.error(e);
+
+          if (e && e.name === 'AbortError') {
+            return;
+          }
 
           let errorMessage = '❌ ';
           if (e && e.name === 'CanNotAccessProjectError') {
@@ -557,8 +561,6 @@
           }
           setProgress(errorMessage, PROGRESS_STATE_ERROR, 1);
         }
-
-        setControlsEnabled(true);
       };
 
       if (window.InitialState) {

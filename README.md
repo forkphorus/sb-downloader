@@ -75,6 +75,27 @@ const title = project.title;
 const metadata = await SBDL.getProjectMetadata('60917032');
 ```
 
+You can also abort the download after starting it. Note that while we try to make sure that ongoing and future network activity is cancelled, some activity may continue for a brief period. Regardless, the Promise returned by download* should reject (not necessarily immediately) if abort is called before it resolves.
+
+```js
+const abortController = new AbortController();
+const options = {
+  // An AbortSignal that, when aborted, stops the project download.
+  signal: abortController.signal
+};
+
+SBDL.downloadProjectFromID('60917032', options)
+  .then((project) => {
+    // ...
+  });
+
+setTimeout(() => {
+  abortController.abort();
+}, 1000);
+```
+
+If you absolutely need to cancel all activity immediately, you can download projects from a Worker instead, which will also prevent downloading from causing slowdowns on the main thread.
+
 For a much more thorough example, see `index.html`.
 
 ## Privacy

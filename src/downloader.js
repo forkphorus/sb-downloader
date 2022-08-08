@@ -19,6 +19,7 @@ const ASSET_HOST = 'https://assets.scratch.mit.edu/internalapi/asset/$path/get/'
  * @property {(type: 'project' | 'assets' | 'compress', loaded: number, total: number) => void} [onProgress] Called periodically with progress updates.
  * @property {Date} [date] The date to use for the "last modified" time in generated projects. If not set, defaults to an arbitrary date in the past.
  * @property {boolean} [compress] Whether to compress generated projects or not. Compressed projects take longer to generate but are much smaller. Defaults to true.
+ * @property {AbortSignal} [signal] An AbortSignal that can be used to cancel the download.
  */
 
 /**
@@ -31,6 +32,15 @@ const ASSET_HOST = 'https://assets.scratch.mit.edu/internalapi/asset/$path/get/'
  * @returns {Options}
  */
 const getDefaultOptions = () => ({});
+
+/**
+ * @param {Options} options
+ */
+const throwIfAborted = (options) => {
+  if (options.signal) {
+    options.signal.throwIfAborted();
+  }
+};
 
 /**
  * Browser support for Array.prototype.flat is not to the level we want.
@@ -224,7 +234,9 @@ const downloadScratch3 = async (projectData, options, progressTarget) => {
     const md5ext = data.md5ext;
     progressTarget.fetching(md5ext);
 
-    const buffer = await fetchAsArrayBuffer(ASSET_HOST.replace('$path', md5ext));
+    const buffer = await fetchAsArrayBuffer(ASSET_HOST.replace('$path', md5ext), {
+      signal: options.signal
+    });
 
     progressTarget.fetched(md5ext);
     return {
@@ -310,6 +322,8 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
     });
   };
 
+  throwIfAborted(options);
+
   const bufferView = new Uint8Array(data);
   if (bufferView[0] === '{'.charCodeAt(0)) {
     // JSON project. We must download the assets.
@@ -323,6 +337,7 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
         return;
       }
       timeout = setTimeout(() => {
+        throwIfAborted(options);
         timeout = null;
         if (!isDoneLoadingProject && options.onProgress) {
           options.onProgress('assets', loadedAssets, totalAssets);
@@ -333,10 +348,12 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
     /** @type {InternalProgressTarget} */
     const progressTarget = {
       fetching: () => {
+        throwIfAborted(options);
         totalAssets++;
         sendThrottledAssetProgressUpdate();  
       },
       fetched: () => {
+        throwIfAborted(options);
         loadedAssets++;
         sendThrottledAssetProgressUpdate();  
       }
@@ -346,6 +363,8 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
     const json = JSON.parse(text);
     type = identifyProjectTypeFromJSON(json);
     const downloadedZip = await downloadProjectFromJSON(json, options, progressTarget);
+
+    throwIfAborted(options);
 
     if (options.onProgress) {
       options.onProgress('assets', totalAssets, totalAssets);
@@ -364,6 +383,8 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
       throw new Error('Cannot parse project: not a zip or sb');
     }
 
+    throwIfAborted(options);
+
     const projectDataFile = zip.file(/^([^/]*\/)?project\.json$/)[0];
     if (!projectDataFile) {
       throw new Error('project.json is missing');
@@ -374,6 +395,8 @@ export const downloadProjectFromBinaryOrJSON = async (data, options = getDefault
     type = identifyProjectTypeFromJSON(projectData);
     arrayBuffer = data;
   }
+
+  throwIfAborted(options);
 
   return {
     title: '',
@@ -468,7 +491,7 @@ export const downloadProjectFromURL = async (url, options = getDefaultOptions())
       if (options.onProgress) {
         options.onProgress('project', progress, 1);
       }
-    });
+    }, options.signal);
   } catch (e) {
     if (e instanceof HTTPError && e.status === 404) {
       throw new CannotAccessProjectError(e.message);
@@ -490,6 +513,7 @@ export const downloadProjectFromID = async (id, options = getDefaultOptions()) =
     // This is okay for now.
     console.warn(e);
   }
+  throwIfAborted(options);
   const token = meta && meta.project_token;
   const title = meta && meta.title;
   const tokenPart = token ? `?token=${token}` : '';

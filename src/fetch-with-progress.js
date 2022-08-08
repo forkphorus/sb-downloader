@@ -1,7 +1,13 @@
 import fetch from 'cross-fetch';
 import { HTTPError } from './errors';
 
-const fetchAsArrayBufferWithProgress = (url, progressCallback) => {
+/**
+ * @param {stirng} url
+ * @param {(progress: number) => void} progressCallback
+ * @param {AbortSignal} [abortSignal] 
+ * @returns {Promise<ArrayBuffer>}
+ */
+const fetchAsArrayBufferWithProgress = (url, progressCallback, abortSignal) => {
   // We can't always track real progress, but we should still fire explicit 0% and 100% complete events.
   progressCallback(0);
 
@@ -20,11 +26,19 @@ const fetchAsArrayBufferWithProgress = (url, progressCallback) => {
       xhr.onerror = () => {
         reject(new Error(`Failed to fetch ${url}: xhr error`));
       };
+      xhr.onabort = () => {
+        reject(new Error(`Failed to fetch ${url}: aborted`));
+      };
       xhr.onprogress = (e) => {
         if (e.lengthComputable) {
           progressCallback(e.loaded / e.total);
         }
       };
+      if (abortSignal) {
+        abortSignal.addEventListener('abort', () => {
+          xhr.abort();
+        });
+      }
       xhr.responseType = 'arraybuffer';
       xhr.open('GET', url);
       xhr.send();

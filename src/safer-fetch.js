@@ -13,6 +13,11 @@ const MAX_ATTEMPTS = 3;
 const MAX_CONCURRENT = 100;
 const RETRY_DELAY = 5000;
 
+const finishedFetch = () => {
+  currentFetches--;
+  checkStartNextFetch();
+};
+
 const startNextFetch = ([resolve, url, options]) => {
   let firstError;
   let attempts = 0;
@@ -25,11 +30,16 @@ const startNextFetch = ([resolve, url, options]) => {
       throw new HTTPError(url, r.status);
     })
     .then((buffer) => {
-      currentFetches--;
-      checkStartNextFetch();
+      finishedFetch();
       return buffer;
     })
     .catch((error) => {
+      if (error && error.name === 'AbortError') {
+        // The error we throw here must be an AbortError.
+        finishedFetch();
+        throw error;
+      }
+
       console.warn(`Attempt to fetch ${url} failed`, error);
       if (!firstError) {
         firstError = error;
@@ -41,18 +51,34 @@ const startNextFetch = ([resolve, url, options]) => {
           .then(attemptToFetch);
       }
 
-      currentFetches--;
-      checkStartNextFetch();
+      finishedFetch();
       throw new Error(`Failed to fetch ${url}: ${firstError}`);
     });
 
   return resolve(attemptToFetch());
 };
 
+const findNextFetch = () => {
+  while (true) {
+    if (queue.length === 0) {
+      return null;
+    }
+    const next = queue.shift();
+    const options = next[2];
+    if (options && options.signal && options.signal.aborted) {
+      continue;
+    }
+    return next;
+  }
+};
+
 const checkStartNextFetch = () => {
-  if (currentFetches < MAX_CONCURRENT && queue.length > 0) {
-    currentFetches++;
-    startNextFetch(queue.shift());
+  if (currentFetches < MAX_CONCURRENT) {
+    const nextFetch = findNextFetch();
+    if (nextFetch) {
+      currentFetches++;
+      startNextFetch(nextFetch);
+    }
   }
 };
 
