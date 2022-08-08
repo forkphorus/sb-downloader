@@ -27,7 +27,9 @@ const fetchAsArrayBufferWithProgress = (url, progressCallback, abortSignal) => {
         reject(new Error(`Failed to fetch ${url}: xhr error`));
       };
       xhr.onabort = () => {
-        reject(new Error(`Failed to fetch ${url}: aborted`));
+        const error = new Error(`Failed to fetch ${url}: aborted`);
+        error.name = 'AbortError';
+        reject(error);
       };
       xhr.onprogress = (e) => {
         if (e.lengthComputable) {
