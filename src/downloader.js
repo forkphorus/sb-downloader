@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import fetch from 'cross-fetch';
-import {CannotAccessProjectError, HTTPError} from './errors.js';
+import {AbortError, CannotAccessProjectError, HTTPError} from './errors.js';
 import fetchAsArrayBuffer from './safer-fetch.js';
 import fetchAsArrayBufferWithProgress from './fetch-with-progress.js';
 import environment from './environment.js';
@@ -40,8 +40,9 @@ const parseOptions = (givenOptions) => Object.assign({
  * @param {Options} options
  */
 const throwIfAborted = (options) => {
-  if (options.signal) {
-    options.signal.throwIfAborted();
+  // Browser support for AbortSignal.prototype.throwIfAborted() is not good.
+  if (options.signal && options.signal.aborted) {
+    throw new AbortError();
   }
 };
 

@@ -19,3 +19,14 @@ export class CannotAccessProjectError extends Error {
     this.name = 'CanNotAccessProjectError';
   }
 }
+
+/**
+ * NOTE: Do NOT use `instanceof AbortError` to detect abort errors.
+ * Use `error.name === 'AbortError'` instead.
+ */
+export class AbortError extends Error {
+  constructor (message) {
+    super(message || 'The operation was aborted.');
+    this.name = 'AbortError';
+  }
+}
