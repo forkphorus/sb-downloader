@@ -14,12 +14,19 @@
       h1 {
         text-align: center;
         font-size: 54px;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        background-image: linear-gradient(to right, #4C97FF, #9966FF, #FF6680);
       }
       h1, h2 {
         font-weight: normal;
       }
       h1, h2, p {
         margin: 16px 0;
+      }
+      noscript {
+        font-weight: bold;
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -30,16 +37,6 @@
         a {
           color: #4af;
         }
-      }
-
-      .accent {
-        position: absolute;
-        top: 0;
-        left: 0;
-        min-width: 480px;
-        width: 100%;
-        height: 8px;
-        background-image: linear-gradient(to right, #4C97FF, #9966FF, #FF6680);
       }
 
       .project-input-outer {
@@ -176,17 +173,15 @@
     </style>
   </head>
   <body>
-    <div class="accent"></div>
-
     <main>
-      <h1>.sb downloader</h1>
+      <h1>.sb downloader 2.0</h1>
 
       <noscript>
         <p>This site requires JavaScript.</p>
       </noscript>
 
       <p>
-        .sb downloader downloads <a href="https://scratch.mit.edu/">Scratch</a> 1, 2, or 3 projects.
+        .sb downloader downloads <a href="https://scratch.mit.edu/">Scratch</a> 1 (sb), Scratch 2 (sb2), or Scratch 3 (sb3) projects.
         Just paste the project's ID or URL into the input below and press the download button.
       </p>
 
@@ -236,14 +231,14 @@
           <div class="download-icon"></div>
           <div>
             <div>Download legacy version</div>
-            <div><small>For pre-2019 projects - read below</small></div>
+            <div><small>For some pre-2019 projects. Read below</small></div>
           </div>
         </button>
       </div>
 
       <div class="progress-outer" hidden>
         <div class="progress-inner"></div>
-        <div class="progress-text">⏳ Downloading project metadata...</div>
+        <div class="progress-text">⏳ Loading scripts...</div>
       </div>
       <script>
         (function() {
@@ -586,7 +581,11 @@
 
           let errorMessage = '❌ ';
           if (e && e.name === 'CanNotAccessProjectError') {
-            errorMessage += 'The project does not exist or the ID is invalid.'
+            if (legacy) {
+              errorMessage += 'No legacy version available.'
+            } else {
+              errorMessage += 'The project does not exist or the ID is invalid.'
+            }
           } else {
             errorMessage += e;
           }
