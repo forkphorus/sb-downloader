@@ -548,7 +548,7 @@
 
           const options = {
             onProgress: progressCallback,
-            signal: globalAbortController.signal
+            signal: localAbortController.signal
           };
 
           const downloadFunction = legacy ? downloadLegacyProjectFromID : downloadProjectFromID;
