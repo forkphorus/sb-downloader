@@ -8,7 +8,9 @@
     <style>
       main {
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        width: 480px;
+        width: 100%;
+        max-width: 568px;
+        min-width: 420px;
         margin: 24px auto;
       }
       h1 {
@@ -49,6 +51,11 @@
         margin: 16px 0;
         font-size: 24px;
         line-height: 32px;
+      }
+      @media (max-width: 500px) {
+        .project-input-outer {
+          font-size: 22px;
+        }
       }
       .project-input {
         border: none;
@@ -146,13 +153,28 @@
         text-align: center;
       }
 
-      .asset-viewer-outer {
-        margin: 16px 0;
+      .asset-viewer-option-outer, .asset-viewer-option-outer > label {
+        cursor: pointer;
+        display: block;
         width: 100%;
       }
+      .asset-viewer-outer {
+        margin: 16px 0;
+        border-collapse: collapse;
+      }
+      .asset-viewer-outer, .asset-viewer-outer td, .asset-viewer-outer th {
+        border: 1px solid rgba(0, 0, 0, 0.5);
+        margin: 0;
+        padding: 0;
+      }
+      @media (prefers-color-scheme: dark) {
+        .asset-viewer-outer, .asset-viewer-outer td, .asset-viewer-outer th {
+          border-color: rgba(255, 255, 255, 0.5);
+        }
+      }
       .asset-viewer-id {
-        width: 100px;
-        min-width: 100px;
+        width: 85px;
+        min-width: 85px;
       }
       td.asset-viewer-id {
         font-size: small;
@@ -160,17 +182,29 @@
         word-wrap: anywhere;
       }
       .asset-viewer-content {
-        width: 100%;
+        box-sizing: border-box;
+        width: 480px;
         height: 100%;
+        text-align: center;
+      }
+      .asset-viewer-content > * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        max-width: 100%;
+        border: none;
       }
       .asset-viewer-content > textarea {
-        box-sizing: border-box;
+        display: block;
+        min-width: 100%;
         width: 100%;
-        height: 100%;
-        min-height: 100px;
+        height: 125px;
+      }
+      .asset-viewer-content > audio {
+        width: 100%;
+        display: block;
       }
       .asset-viewer-content > img {
-        max-width: 480px;
         max-height: 360px;
       }
       .asset-viewer-row:hover img {
