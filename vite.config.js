@@ -13,7 +13,8 @@ export default {
         'safari >= 12',
         'edge >= 18',
         'firefox >= 68'
-      ]
+      ],
+      polyfills: false
     })
   ]
 };
