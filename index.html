@@ -411,10 +411,7 @@
         hideProgress();
         resetAssetViewer();
         cancelOngoingDownload();
-
-        const params = new URLSearchParams(location.search);
-        params.delete('id');
-        replaceParameters(params);
+        replaceParameters(new URLSearchParams());
 
         const projectId = extractProjectId(e.target.value);
         e.target.value = projectId ? `${SCRATCH_PREFIX}${projectId}` : SCRATCH_PREFIX;
