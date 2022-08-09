@@ -4,6 +4,18 @@ https://forkphorus.github.io/sb-downloader/
 
 A downloader for Scratch 1, 2, or 3 projects.
 
+## Development
+
+```sh
+git clone https://github.com/forkphorus/sb-downloader.git
+cd sb-downloader
+npm ci
+# For development
+npm run dev
+# For production (output in `dist`)
+npm run build
+```
+
 ## API
 
 You can use .sb downloader in your own programs with our brand new API that no longer causes physical pain to use.
