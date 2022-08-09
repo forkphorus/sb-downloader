@@ -14,6 +14,7 @@ npm ci
 npm run dev
 # For production (output in `dist`)
 npm run build
+npm run preview
 ```
 
 ## API
