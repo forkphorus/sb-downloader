@@ -1,1 +1,1 @@
-export * from './downloader';
+export * from './downloader.js';

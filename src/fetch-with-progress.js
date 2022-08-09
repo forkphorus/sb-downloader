@@ -1,5 +1,5 @@
 import fetch from 'cross-fetch';
-import { HTTPError } from './errors';
+import { HTTPError } from './errors.js';
 
 /**
  * @param {stirng} url

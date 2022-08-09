@@ -1,9 +1,9 @@
 import JSZip from 'jszip';
 import fetch from 'cross-fetch';
-import {CannotAccessProjectError, HTTPError} from './errors';
-import fetchAsArrayBuffer from './safer-fetch';
-import fetchAsArrayBufferWithProgress from './fetch-with-progress';
-import environment from './environment';
+import {CannotAccessProjectError, HTTPError} from './errors.js';
+import fetchAsArrayBuffer from './safer-fetch.js';
+import fetchAsArrayBufferWithProgress from './fetch-with-progress.js';
+import environment from './environment.js';
 
 /**
  * @typedef DownloadedProject
