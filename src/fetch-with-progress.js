@@ -1,5 +1,5 @@
 import fetch from 'cross-fetch';
-import { HTTPError } from './errors.js';
+import {AbortError, HTTPError} from './errors.js';
 
 /**
  * @param {stirng} url
@@ -27,9 +27,7 @@ const fetchAsArrayBufferWithProgress = (url, progressCallback, abortSignal) => {
         reject(new Error(`Failed to fetch ${url}: xhr error`));
       };
       xhr.onabort = () => {
-        const error = new Error(`Failed to fetch ${url}: aborted`);
-        error.name = 'AbortError';
-        reject(error);
+        reject(new AbortError(`Failed to fetch ${url}: aborted`))
       };
       xhr.onprogress = (e) => {
         if (e.lengthComputable) {
