@@ -7,12 +7,10 @@ export default {
   plugins: [
     legacy({
       targets: [
-        'chrome >= 70',
-        'chromeandroid >= 70',
-        'ios >= 12',
+        // The limiting factor is support for AbortController
+        'chrome >= 66',
         'safari >= 12',
-        'edge >= 18',
-        'firefox >= 68'
+        'firefox >= 57'
       ],
       polyfills: false
     })
