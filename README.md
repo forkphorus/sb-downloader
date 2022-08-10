@@ -159,6 +159,10 @@ const options = {
 const project = await SBDL.downloadProjectFromURL(`https://projects.example.com/${id}`);
 ```
 
+## Unshared projects
+
+It's possible that unshared projects will no longer be accessible using .sb downloader in the future due to upcoming Scratch API changes. For more information: https://docs.turbowarp.org/unshared-projects
+
 ## Privacy
 
 In Node.js, .sb downloader will only talk directly to the Scratch API: api.scratch.mit.edu, projects.scratch.mit.edu, and assets.scratch.mit.edu.
