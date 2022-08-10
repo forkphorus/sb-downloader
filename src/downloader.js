@@ -526,7 +526,6 @@ export const downloadProjectFromID = async (id, options) => {
     meta = await getProjectMetadata(id, options);
   } catch (e) {
     // This is okay for now.
-    console.warn(e);
   }
   throwIfAborted(options);
   const token = meta && meta.project_token;
@@ -552,7 +551,6 @@ export const downloadLegacyProjectFromID = async (id, options) => {
   const [meta, project] = await Promise.all([
     getProjectMetadata(id, options).catch((error) => {
       // Ignore error
-      console.warn(error);
       return null;
     }),
     downloadProjectFromURL(url, options),
