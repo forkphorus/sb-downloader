@@ -2,7 +2,7 @@
 
 https://forkphorus.github.io/sb-downloader/
 
-A downloader for Scratch 1, 2, or 3 projects.
+A downloader for Scratch 1, Scratch 2, or Scratch 3 projects.
 
 ## Development
 
@@ -19,9 +19,7 @@ npm run preview
 
 ## API
 
-You can use .sb downloader in your own programs with our brand new API that no longer causes physical pain to use.
-
-You can install it from npm:
+You can .sb downloader from npm:
 
 ```
 npm install @turbowarp/sbdl
@@ -33,41 +31,42 @@ import * as SBDL from '@turbowarp/sbdl';
 const SBDL = require('@turbowarp/sbdl');
 ```
 
-Or if you just want your code to run in a browser, you can use a `<script>` tag:
+If you just want to run it in a website and can't use a package manager, you can use a `<script>` tag:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@turbowarp/sbdl@2.0.0-alpha.2/lib/bundle-standalone.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turbowarp/sbdl@2.0.0/lib/bundle-standalone.min.js"></script>
 <script>
   // .sb downloader is exported as `SBDL` on window
 </script>
 ```
 
-Here's the primary parts of the API:
+Browsers with full support:
+
+ - Chrome >= 66
+ - Safari >= 12.1
+ - Firefox >= 57
+ - Edge >= 79 (No support for Legacy Edge or IE)
+
+The primary limiting factors are support for AbortController (for cancelling downloads) and TextDecoder (for parsing some edge-case projects). You may be able to polyfill these on your own.
+
+### Simple usage
 
 ```js
-// We assume you've already loaded .sb downloader as `SBDL` using one of the methods listed above.
+// We assume you've already loaded .sb downloader as `SBDL` using one of the methods above.
 
-// All properties are optional. In fact the entire object is optional.
+// All options are optional.
+// If you don't need to set any options, you can simply not provide it to the download methods.
 const options = {
   // May be called periodically with progress updates.
   onProgress: (type, loaded, total) => {
-    // type is either 'project', 'assets', or 'compress'
+    // type is 'project', 'assets', or 'compress'
     console.log(type, loaded / total);
-  },
-
-  // The date to use as the "last modified" time for the files inside generated projects.
-  // Defaults to an arbitrary time in the past.
-  // Must be a `Date` object.
-  date: new Date(),
-
-  // Whether to compress generated projects.
-  // Generated projects take longer to generate but are much smaller.
-  // Defaults to true.
-  compress: true
+  }
 };
 
 // Download using any of these methods.
-// These return a Promise that eventually resolves or rejects. We recommend you use async functions.
+// These return a Promise that eventually resolves or rejects.
+// Using async functions is recommended.
 const project = await SBDL.downloadProjectFromID('60917032', options);
 const project = await SBDL.downloadLegacyProjectFromID('60917032', options);
 const project = await SBDL.downloadProjectFromURL('https://packager.turbowarp.org/example.sb3', options);
@@ -82,13 +81,30 @@ const arrayBuffer = project.arrayBuffer;
 // If the title couldn't be found, this will be an empty string. It is your job to handle that and default to
 // something else such as the project's ID if necessary.
 const title = project.title;
-
-// This method fetches the project's data from api.scratch.mit.edu/projects/id. Only works for shared projects.
-// We use it internally for fetching project tokens and titles. We export it in case you find it useful too.
-const metadata = await SBDL.getProjectMetadata('60917032');
 ```
 
-You can also abort the download after starting it. Note that while we try to make sure that ongoing and future network activity is cancelled, some activity may continue for a brief period. Regardless, the Promise returned by download* should reject (not necessarily immediately) if abort is called before it resolves.
+### Compression
+
+There are options to configure how projects should be compressed. Projects are compressed by default in a way that is fully deterministic and reproducible -- the same project should always output the exact same set of bytes. We expect that most people will want to use the default settings.
+
+```js
+const options = {
+  // The date to use as the "last modified" time for the files inside generated projects.
+  // Defaults to an constant date in the past if not set (Fri, 31 Dec 2021 00:00:00 GMT) so
+  // that generated projects are deterministic and reproducible.
+  // Must be a `Date` object.
+  date: new Date(),
+
+  // Whether to compress generated projects.
+  // Generated projects take longer to generate but are much smaller.
+  // Defaults to true.
+  compress: true
+};
+```
+
+### Aborting
+
+You can also abort the download after starting it. Note that while we try to stop ongoing and future network activity, some activity may continue for a brief period depending on what step the download process was on. Regardless, the Promise returned by download* should reject (although not necessarily immediately) if abort is called before it resolves.
 
 ```js
 const abortController = new AbortController();
@@ -100,8 +116,12 @@ const options = {
 SBDL.downloadProjectFromID('60917032', options)
   .then((project) => {
     // ...
+  })
+  .catch((error) => {
+    // ...
   });
 
+// Cancel the download after 1 second
 setTimeout(() => {
   abortController.abort();
 }, 1000);
@@ -109,23 +129,38 @@ setTimeout(() => {
 
 If you absolutely need to cancel all activity immediately, you can download projects from a Worker instead, which will also prevent downloading from causing slowdowns on the main thread.
 
-.sb downloader is compatible with most Scratch 3 forks as long as they haven't deviated too far.
+### Fetching metadata
+
+```js
+// This method fetches the project's metadata from https://api.scratch.mit.edu/projects/id
+// Example data: https://api.scratch.mit.edu/projects/104
+// Returned promise rejects when the project is unshared.
+// In browser environments, this will talk to a server we run instead of the Scratch API directly.
+// See the "Privacy" section below for more information.
+// We use this internally for fetching project tokens and titles. We export it in case you find it useful too.
+const metadata = await SBDL.getProjectMetadata('60917032');
+```
+
+### Scratch forks
+
+.sb downloader should be compatible with most Scratch forks. It only parses projects to find out what costumes and sounds it needs to download, so things like new blocks won't cause problems. There is an option to configure where it will fetch assets from.
 
 ```js
 const options = {
-  // $id is will be replaced with the asset ID (md5ext)
-  // The URL to use will vary for each mod. Use developer tools to find it.
+  // $id is will be replaced with the asset ID (md5ext) eg. "188325c56b79ff3cd58497c970ba87a6.svg"
+  // The URL to use will vary for each mod. You can usually examine network requests using
+  // your browser's developer tools to find this.
   assetHost: 'https://assets.example.com/$id'
 };
-// Use downloadProjectFromURL or fetch it yourself and use downloadProjectFromBinaryOrJSON
-// The URL to use will vary for each mod. Use developer tools to find it.
+
+// Use downloadProjectFromURL or fetch the project's JSON yourself and use downloadProjectFromBinaryOrJSON.
+// The URL to use will vary for each mod. You can usually examine network requests using.
+// your browser's developer tools to find this.
 const project = await SBDL.downloadProjectFromURL(`https://projects.example.com/${id}`);
 ```
 
-For a much more thorough example, see `index.html`.
-
 ## Privacy
 
-In Node.js, .sb downloader will only talk directly to the Scratch API.
+In Node.js, .sb downloader will only talk directly to the Scratch API: api.scratch.mit.edu, projects.scratch.mit.edu, and assets.scratch.mit.edu.
 
-In browsers, in order to access the project token and title, .sb downloader may send the project ID to a server under our control as it can't directly access certain Scratch APIs. The ID may be recorded for up to 24 hours for caching purposes only.
+In browsers, in order to access the project token and title, .sb downloader may send the project ID to a server under our control (trampoline.turbowarp.org or trampoline.turbowarp.xyz) as it can't directly access certain Scratch APIs. The ID may be recorded for up to 24 hours for caching purposes only.
