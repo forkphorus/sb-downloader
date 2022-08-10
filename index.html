@@ -563,15 +563,13 @@
           const localAbortController = new AbortController();
           globalAbortController = localAbortController;
 
-          const urlParams = new URLSearchParams(location.search);
+          const urlParams = new URLSearchParams();
           urlParams.set('id', projectId);
           if (legacy) {
             urlParams.set('legacy', 'true');
           } else {
             urlParams.delete('legacy');
           }
-          // Remove a legacy parameter
-          urlParams.delete('type');
           replaceParameters(urlParams);
 
           mostRecentProject = null;
