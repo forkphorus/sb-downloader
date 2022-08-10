@@ -82,6 +82,12 @@ const isScratch1Project = (uint8array) => {
 };
 
 /**
+ * @param {Uint8Array} uint8array
+ * @returns {boolean}
+ */
+const isProbablyJSON = (uint8array) => uint8array[0] === '{'.charCodeAt(0);
+
+/**
  * @param {unknown} projectData
  * @param {Options} options
  * @param {InternalProgressTarget} progressTarget
@@ -283,133 +289,153 @@ const identifyProjectTypeFromJSON = (projectData) => {
 };
 
 /**
- * @param {object} json
+ * @param {JSZip} zip
  * @param {Options} options
- * @param {InternalProgressTarget} progressTarget
- * @returns {Promise<JSZip>}
+ * @returns {Promise<ArrayBuffer>}
  */
-const downloadProjectFromJSON = (json, options, progressTarget) => {
-  const type = identifyProjectTypeFromJSON(json);
-  if (!type) {
-    throw new Error('Could not identify type of project');
+const generateZip = (zip, options) => {
+  const date = options.date || new Date('Fri, 31 Dec 2021 00:00:00 GMT');
+  for (const file of Object.values(zip.files)) {
+    file.date = date;
   }
-  if (type === 'sb3') {
-    return downloadScratch3(json, options, progressTarget);
-  } else if (type === 'sb2') {
-    return downloadScratch2(json, options, progressTarget);
-  }
-  // Should never happen.
-  throw new Error(`Unknown project type: ${type}`);
+  return zip.generateAsync({
+    type: 'arraybuffer',
+    compression: options.compress !== false ? 'DEFLATE' : 'STORE'
+  }, (meta) => {
+    if (options.onProgress) {
+      options.onProgress('compress', meta.percent / 100, 1);
+    }
+  });
 };
 
 /**
- * @param {ArrayBuffer | ArrayBufferView} data
- * @param {Options} options
+ * @param {object} projectData Parsed project.json or stringified JSON.
+ * @param {Options} [options]
  * @returns {Promise<DownloadedProject>}
  */
-export const downloadProjectFromBuffer = async (data, options = parseOptions()) => {
-  let type;
-  let arrayBuffer;
+export const downloadProjectFromJSON = async (projectData, options) => {
+  options = parseOptions(options);
 
-  /**
-   * @param {JSZip} zip
-   * @returns {Promise<ArrayBuffer>}
-   */
-  const generateZip = (zip) => {
-    const date = options.date || new Date('Fri, 31 Dec 2021 00:00:00 GMT');
-    for (const file of Object.values(zip.files)) {
-      file.date = date;
+  if (typeof projectData === 'string') {
+    projectData = JSON.parse(projectData);
+  }
+
+  let isDoneLoadingProject = false;
+  let timeout = null;
+  let loadedAssets = 0;
+  let totalAssets = 0;
+  const sendThrottledAssetProgressUpdate = () => {
+    if (timeout) {
+      return;
     }
-    return zip.generateAsync({
-      type: 'arraybuffer',
-      compression: options.compress !== false ? 'DEFLATE' : 'STORE'
-    }, (meta) => {
-      if (options.onProgress) {
-        options.onProgress('compress', meta.percent / 100, 1);
+    timeout = setTimeout(() => {
+      throwIfAborted(options);
+      timeout = null;
+      if (!isDoneLoadingProject && options.onProgress) {
+        options.onProgress('assets', loadedAssets, totalAssets);
       }
     });
   };
 
+  /** @type {InternalProgressTarget} */
+  const progressTarget = {
+    fetching: () => {
+      throwIfAborted(options);
+      totalAssets++;
+      sendThrottledAssetProgressUpdate();
+    },
+    fetched: () => {
+      throwIfAborted(options);
+      loadedAssets++;
+      sendThrottledAssetProgressUpdate();
+    }
+  };
+
+  const type = identifyProjectTypeFromJSON(projectData);
+
+  /** @type {JSZip} */
+  let downloadedZip;
+  if (type === 'sb3') {
+    downloadedZip = await downloadScratch3(projectData, options, progressTarget);
+  } else if (type === 'sb2') {
+    downloadedZip = await downloadScratch2(projectData, options, progressTarget);
+  } else {
+    throw new Error(`Unknown project type: ${type}`);
+  }
+
   throwIfAborted(options);
 
-  const bufferView = new Uint8Array(data);
-  if (bufferView[0] === '{'.charCodeAt(0)) {
-    // JSON project. We must download the assets.
-
-    let isDoneLoadingProject = false;
-    let timeout = null;
-    let loadedAssets = 0;
-    let totalAssets = 0;
-    const sendThrottledAssetProgressUpdate = () => {
-      if (timeout) {
-        return;
-      }
-      timeout = setTimeout(() => {
-        throwIfAborted(options);
-        timeout = null;
-        if (!isDoneLoadingProject && options.onProgress) {
-          options.onProgress('assets', loadedAssets, totalAssets);
-        }
-      });
-    };
-
-    /** @type {InternalProgressTarget} */
-    const progressTarget = {
-      fetching: () => {
-        throwIfAborted(options);
-        totalAssets++;
-        sendThrottledAssetProgressUpdate();  
-      },
-      fetched: () => {
-        throwIfAborted(options);
-        loadedAssets++;
-        sendThrottledAssetProgressUpdate();  
-      }
-    };
-
-    const text = new TextDecoder().decode(data);
-    const json = JSON.parse(text);
-    type = identifyProjectTypeFromJSON(json);
-    const downloadedZip = await downloadProjectFromJSON(json, options, progressTarget);
-
-    throwIfAborted(options);
-
-    if (options.onProgress) {
-      options.onProgress('assets', totalAssets, totalAssets);
-    }
-    isDoneLoadingProject = true;
-
-    arrayBuffer = await generateZip(downloadedZip);
-  } else if (isScratch1Project(bufferView)) {
-    arrayBuffer = data;
-    type = 'sb';
-  } else {
-    let zip;
-    try {
-      zip = await JSZip.loadAsync(data);
-    } catch (e) {
-      throw new Error('Cannot parse project: not a zip or sb');
-    }
-
-    throwIfAborted(options);
-
-    const projectDataFile = zip.file(/^([^/]*\/)?project\.json$/)[0];
-    if (!projectDataFile) {
-      throw new Error('project.json is missing');
-    }
-
-    const projectDataText = await projectDataFile.async('text');
-    const projectData = JSON.parse(projectDataText);
-    type = identifyProjectTypeFromJSON(projectData);
-    arrayBuffer = data;
+  if (options.onProgress) {
+    options.onProgress('assets', totalAssets, totalAssets);
   }
+  isDoneLoadingProject = true;
+
+  const zippedProject = await generateZip(downloadedZip, options);
+  throwIfAborted(options);
+
+  return {
+    title: '',
+    type,
+    arrayBuffer: zippedProject
+  };
+};
+
+/**
+ * @param {ArrayBuffer | ArrayBufferView} data Data of compressed project or project.json
+ * @param {Options} [options]
+ * @returns {Promise<DownloadedProject>}
+ */
+export const downloadProjectFromBuffer = async (data, options) => {
+  options = parseOptions(options);
+
+  throwIfAborted(options);
+
+  if (ArrayBuffer.isView(data)) {
+    data = data.buffer.slice(data.byteOffset, data.byteLength);
+  }
+  const uint8array = new Uint8Array(data);
+
+  if (isProbablyJSON(uint8array)) {
+    // JSON project. We must download the assets.
+    const text = new TextDecoder().decode(data);
+    const projectData = JSON.parse(text);
+    return downloadProjectFromJSON(projectData, options);
+  }
+
+  if (isScratch1Project(uint8array)) {
+    // Scratch 1 project. Return as-is.
+    return {
+      title: '',
+      type: 'sb',
+      arrayBuffer: data,
+    };
+  }
+
+  // Compressed project. Need to unzip to figure out what type it is.
+  let zip;
+  try {
+    zip = await JSZip.loadAsync(data);
+  } catch (e) {
+    throw new Error('Cannot parse project: not a zip or sb');
+  }
+
+  throwIfAborted(options);
+
+  const projectDataFile = zip.file(/^([^/]*\/)?project\.json$/)[0];
+  if (!projectDataFile) {
+    throw new Error('project.json is missing');
+  }
+
+  const projectDataText = await projectDataFile.async('text');
+  const projectData = JSON.parse(projectDataText);
+  const type = identifyProjectTypeFromJSON(projectData);
 
   throwIfAborted(options);
 
   return {
     title: '',
     type,
-    arrayBuffer
+    arrayBuffer: data
   };
 };
 

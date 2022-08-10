@@ -70,6 +70,7 @@ const options = {
 const project = await SBDL.downloadProjectFromID('60917032', options);
 const project = await SBDL.downloadLegacyProjectFromID('60917032', options);
 const project = await SBDL.downloadProjectFromURL('https://packager.turbowarp.org/example.sb3', options);
+const project = await SBDL.downloadProjectFromJSON(fs.readFileSync('project.json', 'utf-8'), options);
 const project = await SBDL.downloadProjectFromBuffer(fs.readFileSync('project.json'), options);
 
 // The output:
