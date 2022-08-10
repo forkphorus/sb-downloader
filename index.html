@@ -423,6 +423,12 @@
         }
       });
 
+      projectInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.target.blur();
+          downloadProject(false);
+        }
+      });
       downloadLatestButton.addEventListener('click', () => {
         downloadProject(false);
       });
