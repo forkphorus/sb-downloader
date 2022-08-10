@@ -634,7 +634,7 @@
           let errorMessage = '❌ ';
           if (e && e.name === 'CanNotAccessProjectError') {
             if (legacy) {
-              errorMessage += 'No legacy version available.'
+              errorMessage += 'The project does not exist or it was made after January 2, 2019 so no legacy version is available.'
             } else {
               errorMessage += 'The project does not exist or the ID is invalid.'
             }
