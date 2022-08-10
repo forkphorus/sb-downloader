@@ -70,7 +70,7 @@ const options = {
 const project = await SBDL.downloadProjectFromID('60917032', options);
 const project = await SBDL.downloadLegacyProjectFromID('60917032', options);
 const project = await SBDL.downloadProjectFromURL('https://packager.turbowarp.org/example.sb3', options);
-const project = await SBDL.downloadProjectFromBinaryOrJSON(fs.readFileSync('project.json'), options);
+const project = await SBDL.downloadProjectFromBuffer(fs.readFileSync('project.json'), options);
 
 // The output:
 // type is 'sb', 'sb2', or 'sb3'
@@ -153,7 +153,7 @@ const options = {
   assetHost: 'https://assets.example.com/$id'
 };
 
-// Use downloadProjectFromURL or fetch the project's JSON yourself and use downloadProjectFromBinaryOrJSON.
+// Use downloadProjectFromURL or fetch the project's JSON yourself and use downloadProjectFromBuffer.
 // The URL to use will vary for each mod. You can usually examine network requests using.
 // your browser's developer tools to find this.
 const project = await SBDL.downloadProjectFromURL(`https://projects.example.com/${id}`);

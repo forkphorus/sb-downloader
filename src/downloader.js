@@ -303,11 +303,11 @@ const downloadProjectFromJSON = (json, options, progressTarget) => {
 };
 
 /**
- * @param {ArrayBuffer} data
+ * @param {ArrayBuffer | ArrayBufferView} data
  * @param {Options} options
  * @returns {Promise<DownloadedProject>}
  */
-export const downloadProjectFromBinaryOrJSON = async (data, options = parseOptions()) => {
+export const downloadProjectFromBuffer = async (data, options = parseOptions()) => {
   let type;
   let arrayBuffer;
 
@@ -511,7 +511,7 @@ export const downloadProjectFromURL = async (url, options) => {
     }
     throw e;
   }
-  return downloadProjectFromBinaryOrJSON(buffer, options);
+  return downloadProjectFromBuffer(buffer, options);
 };
 
 /**
