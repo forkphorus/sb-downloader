@@ -2,6 +2,7 @@
   "name": "@turbowarp/sbdl",
   "version": "2.0.0-beta.1",
   "description": "A downloader for Scratch 1, 2, or 3 projects.",
+  "type": "module",
   "keywords": [
     "scratch"
   ],
