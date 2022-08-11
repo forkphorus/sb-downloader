@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+  </head>
+  <body>
+    <button>Download</button>
+    <script src="lib/bundle-standalone.js"></script>
+    <script>
+      const button = document.querySelector('button');
+      button.onclick = async () => {
+        const project = await SBDL.downloadProjectFromID('104');
+        console.log(project);
+      };
+    </script>
+  </body>
+</html>

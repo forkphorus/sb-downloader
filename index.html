@@ -1,534 +1,669 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <title>.sb downloader</title>
+    <style>
+      main {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        width: 100%;
+        max-width: 568px;
+        min-width: 420px;
+        margin: 24px auto;
+      }
+      h1 {
+        text-align: center;
+        font-size: 54px;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        background-image: linear-gradient(to right, #4C97FF, #d65cd6, #ff8c1a);
+      }
+      @media (prefers-color-scheme: dark) { 
+        h1 {
+          background-image: linear-gradient(to right, #4cbfe6, #d65cd6, #ff8c1a);
+        }
+      }
+      h1, h2 {
+        font-weight: normal;
+      }
+      h1, h2, p {
+        margin: 16px 0;
+      }
+      noscript {
+        font-weight: bold;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          background-color: #111;
+          color: #eee;
+        }
+        a {
+          color: #4af;
+        }
+        a:visited {
+          color: rgb(255, 153, 255);
+        }
+        a:active {
+          color: rgb(247, 80, 80);
+        }
+      }
 
-<head>
-  <title>.sb downloader</title>
-  <meta charset="utf8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="referrer" content="no-referrer">
-  <style>
-    /* basic styles to make things look nicer */
-    body {
-      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      width: 480px;
-      margin: 24px auto;
-    }
-    p {
-      margin: 8px 0 16px 0;
-    }
-    h1 {
-      font-size: 54px;
-      line-height: 72px;
-      margin: 0;
-    }
-    h2 {
-      font-size: 24px;
-      line-height: 32px;
-      margin: 16px 0 0 0;
-    }
-    h1, h2 {
-      font-weight: normal;
-    }
-    a {
-      color: #25d;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-    a:visited {
-      color: #73c;
-    }
-    a:active {
-      color: #03a;
-    }
-    code {
-      font-family: Menlo, Monaco, Consolas, Courier New, monospace;
-      background: #f1f1f1;
-      border-radius: 3px;
-      margin: 3px;
-      color: #000;
-    }
+      .project-input-outer {
+        margin: 16px 0;
+        font-size: 26px;
+        line-height: 32px;
+      }
+      @media (max-width: 520px) {
+        .project-input-outer {
+          font-size: 22px;
+        }
+      }
+      .project-input {
+        border: none;
+        background: transparent;
+        font: inherit;
+        width: 100%;
+        opacity: 0.6;
+      }
+      .project-input:focus {
+        opacity: 1;
+      }
+      .project-input {
+        color: inherit;
+      }
 
-    /* project ID input */
-    #project-select {
-      font-size: 24px;
-      line-height: 32px;
-      border: none;
-      width: 100%;
-      color: rgba(0, 0, 0, 0.4);
-    }
-    #project-select:focus {
-      color: rgba(0, 0, 0, 1);
-    }
-    #project-select:disabled {
-      background: white;
-    }
+      .download-buttons {
+        margin: 16px 0;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+      }
+      .download-button {
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        font: inherit;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        border-style: solid;
+        border-width: 1px;
+      }
+      .download-button:not(:last-child) {
+        margin-bottom: 16px;
+      }
+      .download-button:hover {
+        opacity: 0.9;
+      }
+      .download-button:active {
+        opacity: 0.8;
+      }
+      .download-latest-button {
+        background: #4C97FF;
+        border-color: #237eff;
+      }
+      .download-legacy-button {
+        background-color: #0E9A6C;
+        border-color: #0d7d58;
+      }
+      .download-icon {
+        width: 24px;
+        height: 24px;
+        margin-right: 8px;
+        /* Icon from https://fonts.google.com/icons?selected=Material%20Symbols%20Outlined%3Adownload%3AFILL%400%3Bwght%40400%3BGRAD%400%3Bopsz%4048 */
+        background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="white" d="M11 40q-1.2 0-2.1-.9Q8 38.2 8 37v-7.15h3V37h26v-7.15h3V37q0 1.2-.9 2.1-.9.9-2.1.9Zm13-7.65-9.65-9.65 2.15-2.15 6 6V8h3v18.55l6-6 2.15 2.15Z"/></svg>');
+      }
+      .download-button small {
+        font-weight: normal;
+      }
 
-    /* project type input */
-    #type-container {
-      width: 100%;
-      text-align: center;
-    }
+      .progress-outer {
+        margin: 8px 0;
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .progress-inner {
+        color: rgb(0, 242, 255);
+        transition: .2s color;
+      }
+      .progress-outer[data-state="done"] .progress-inner {
+        color: rgb(30, 255, 0);
+      }
+      .progress-outer[data-state="error"] .progress-inner {
+        color: rgb(255, 0, 0);
+      }
+      .progress-inner, .progress-fill, .progress-border {
+        z-index: -1;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+      }
+      .progress-fill {
+        width: 10%;
+        transition: .2s width;
+        background-color: currentColor;
+        opacity: 0.35;
+      }
+      .progress-border {
+        border: 1px solid currentColor;
+        opacity: 0.8;
+      }
+      .progress-text {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        padding: 2px 4px;
+        min-height: 35px;
+      }
 
-    :disabled {
-      cursor: not-allowed;
-    }
+      .downloads-outer {
+        margin: 8px 0;
+        text-align: center;
+      }
 
-    /* progress bar */
-    #progress-bar {
-      position: relative;
-      width: 100%;
-      height: 35px;
-      margin-top: 10px;
-    }
-    #progress-bar-fill {
-      position: absolute;
-      height: 100%;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      width: 0;
-      background-color: #cde;
-      transition: background-color 0.3s, width 0.3s;
-    }
-    #progress-bar-fill[state=error] {
-      background-color: #eaa;
-    }
-    #progress-bar-fill[state=success] {
-      background-color: #aea;
-    }
-    #progress-bar-text {
-      position: absolute;
-      top: 50%;
-      left: 5px;
-      transform: translateY(-50%);
-      z-index: 10;
-    }
+      .asset-viewer-option-outer, .asset-viewer-option-outer > label {
+        cursor: pointer;
+        display: block;
+        width: 100%;
+      }
+      .asset-viewer-outer {
+        margin: 16px 0;
+        border-collapse: collapse;
+      }
+      .asset-viewer-outer, .asset-viewer-outer td, .asset-viewer-outer th {
+        border: 1px solid rgba(0, 0, 0, 0.5);
+        margin: 0;
+        padding: 0;
+      }
+      @media (prefers-color-scheme: dark) {
+        .asset-viewer-outer, .asset-viewer-outer td, .asset-viewer-outer th {
+          border-color: rgba(255, 255, 255, 0.5);
+        }
+      }
+      .asset-viewer-id {
+        width: 85px;
+        min-width: 85px;
+      }
+      td.asset-viewer-id {
+        font-size: small;
+        text-align: center;
+        word-wrap: anywhere;
+      }
+      .asset-viewer-content {
+        box-sizing: border-box;
+        width: 480px;
+        height: 100%;
+        text-align: center;
+      }
+      .asset-viewer-content > * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        max-width: 100%;
+        border: none;
+      }
+      .asset-viewer-content > textarea {
+        display: block;
+        min-width: 100%;
+        width: 100%;
+        height: 125px;
+      }
+      .asset-viewer-content > audio {
+        width: 100%;
+        display: block;
+      }
+      .asset-viewer-content > img {
+        max-height: 360px;
+      }
+      .asset-viewer-row:hover img {
+        outline: 1px solid currentColor;
+      }
 
-    /* asset list */
-    #asset-list-container {
-      margin-top: 10px;
-    }
-    #asset-list .name {
-      font-size: 10px;
-    }
-    #asset-list .preview {
-      max-width: 360px;
-    }
-    #asset-list {
-      text-align: center;
-    }
-    #asset-list:empty:after {
-      content: 'Nothing to preview';
-      font-style: italic;
-    }
-    #asset-list tr:hover td > * {
-      outline: 1px solid black;
-    }
-  </style>
-</head>
+      [hidden] {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>.sb downloader 2.0</h1>
 
-<body>
-  <h1><code>.sb</code> downloader</h1>
-  <p><code>.sb</code> downloader downloads <a href="https://scratch.mit.edu/">Scratch</a> 1, 2, or 3 projects. Enter the project ID or URL then choose the format.</p>
-  <p><b>May 22, 2022 - It's possible that unshared projects will no longer be accessible using this tool in the future due to upcoming Scratch API changes. <a href="https://docs.turbowarp.org/unshared-projects">More information</a>.</b></p>
+      <noscript>
+        <p>This site requires JavaScript.</p>
+      </noscript>
 
-  <input id="project-select" value="https://scratch.mit.edu/projects/">
+      <p>
+        .sb downloader downloads <a href="https://scratch.mit.edu/">Scratch</a> 1 (sb), Scratch 2 (sb2), or Scratch 3 (sb3) projects.
+        Just paste the project's ID or URL into the input below and press the download button.
+      </p>
 
-  <div id="type-container">
-    <b>Download project as</b>
-    <button class="download-button" data-type="sb">.sb</button>
-    <button class="download-button" data-type="sb2">.sb2</button>
-    <button class="download-button" data-type="sb3">.sb3</button>
-  </div>
+      <div class="project-input-outer">
+        <input class="project-input" value="https://scratch.mit.edu/projects/" spellcheck="false" autocomplete="off">
+        <script>
+          // The script down below will take a bit to load. We have this separate script so the ID's input
+          // will have the correct state immediately.
+          window.InitialState = (function() {
+            /** @param {HTMLInputElement} el */
+            const moveCursorToEnd = (el) => {
+              el.selectionStart = el.value.length;
+              el.selectionEnd = el.value.length;
+            };
 
-  <div id="progress-bar" hidden>
-    <div id="progress-bar-fill"></div>
-    <div id="progress-bar-text"></div>
-  </div>
+            const projectInput = document.querySelector('.project-input');
 
-  <div id="download-link"></div>
+            const initialUrlParams = new URLSearchParams(location.search);
+            const initialProjectId = initialUrlParams.get('id');
+            // ?type=sb, ?type=sb2, ?type=sb3 is an old parameter
+            const initialType = initialUrlParams.get('type');
+            const initialLegacy = initialUrlParams.get('legacy') === 'true';
+            if (/^\d+$/.test(initialProjectId)) {
+              // We have an initial project ID
+              projectInput.value += initialProjectId;
+              const isLegacy = initialLegacy || initialType === 'sb' || initialType === 'sb2';
+              return {
+                isLegacy
+              };
+            }
 
-  <h2>Asset Viewer</h2>
-  <label>
-    <input type="checkbox" id="asset-list-toggle"> Enable asset viewer
-  </label>
-  <div id="asset-list-container" hidden>
-    <i><small>Some projects cannot be previewed.</small></i>
-    <table width="100%">
-      <thead>
-        <tr>
-          <th width="50%">Name</th>
-          <th width="50%">Preview</th>
-        </tr>
-      </thead>
-      <tbody id="asset-list">
-        <!-- javascript will insert the assets here -->
-      </tbody>
-    </table>
-  </div>
+            // No initial project ID
+            projectInput.focus();
+            moveCursorToEnd(projectInput);
+            return null;
+          })();
+        </script>
+      </div>
 
-  <h2>Code</h2>
-  <p><code>.sb</code> downloader is <a href="https://github.com/forkphorus/sb-downloader">open source</a>.</p>
+      <div class="download-buttons">
+        <button class="download-button download-latest-button">
+          <div class="download-icon"></div>
+          <div>Download project</div>
+        </button>
 
-  <h2>Credits</h2>
-  <p>Thanks to <a href="https://scratch.mit.edu/">Scratch</a> for providing a sufficient public API. The general look of the downloader is inspired by <a href="https://phosphorus.github.io/">phosphorus</a>. The <a href="https://stuk.github.io/jszip/">JSZip</a> library is used for creating zip archives.</p>
+        <button class="download-button download-legacy-button">
+          <div class="download-icon"></div>
+          <div>
+            <div>Download legacy version</div>
+            <div><small>For some pre-2019 projects. Read below</small></div>
+          </div>
+        </button>
+      </div>
 
-  <script src="jszip.min.js"></script>
-  <script src="loader.js"></script>
-  <script>
-    (function() {
-      'use strict';
-
-      // Element references
-
-      const projectInput = document.querySelector('#project-select');
-      const progressBarFill = document.querySelector('#progress-bar-fill');
-      const progressBarText = document.querySelector('#progress-bar-text');
-      const progressBarContainer = document.querySelector('#progress-bar');
-      const assetTableContainer = document.querySelector('#asset-list-container');
-      const assetTable = document.querySelector('#asset-list');
-      const assetTableToggle = document.querySelector('#asset-list-toggle');
-      const downloadLinkEl = document.querySelector('#download-link');
-      const downloadButtons = document.getElementsByClassName('download-button');
-
-      // The last loaded project, if any.
-      let lastResult = null;
-
-      // Returns an object containing all the query string parameters
-      function getQuery(queryString) {
-        queryString = queryString || window.location.search;
-        const query = {};
-        const pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
-        for (var i = 0; i < pairs.length; i++) {
-          const pair = pairs[i].split('=');
-          const key = decodeURIComponent(pair[0]);
-          const value = decodeURIComponent(pair[1] || '');
-          // If either key or value is empty, omit it.
-          if (key && value) {
-            query[key] = value;
+      <div class="progress-outer" hidden>
+        <div class="progress-inner">
+          <div class="progress-border"></div>
+          <div class="progress-fill"></div>
+        </div>
+        <div class="progress-text">⏳ Loading scripts...</div>
+      </div>
+      <script>
+        (function() {
+          const progressOuter = document.querySelector('.progress-outer');
+          if (window.InitialState) {
+            progressOuter.hidden = false;
           }
+        })();
+      </script>
+
+      <div class="downloads-outer"></div>
+
+      <h2>Legacy version of projects</h2>
+      <p>
+        The "legacy version" of a project is a snapshot of the project's state from just before Scratch 3's release on January 2, 2019.
+      </p>
+      <p>
+        When Scratch 3 was released, existing projects weren't converted to sb3 files.
+        However, modifying an existing project will always convert it to an sb3.
+        Sometimes this causes issues because the conversion process isn't perfect, which is when downloading the legacy version can be useful.
+      </p>
+
+      <h2>Unshared projects</h2>
+      <p>
+        It's possible that unshared projects will no longer be accessible using this tool in the future due to upcoming Scratch API changes.
+        <a href="https://docs.turbowarp.org/unshared-projects">More information</a>.
+      </p>
+
+      <h2>Asset viewer</h2>
+      <p class="asset-viewer-placeholder">
+        Load a project first to use the asset viewer.
+      </p>
+      <p class="asset-viewer-option-outer" hidden>
+        <label>
+          <input type="checkbox" class="asset-viewer-option" autocomplete="off">
+          Enable asset viewer
+        </label>
+      </p>
+      <p class="asset-viewer-not-supported" hidden>
+        Scratch 1 projects are not supported in the asset viewer.
+      </p>
+      <table class="asset-viewer-outer" hidden>
+        <thead>
+          <tr>
+            <th class="asset-viewer-id">ID</th>
+            <th class="asset-viewer-content">Contents</th>
+          </tr>
+        </thead>
+        <tbody class="asset-viewer-inner"></tbody>
+      </table>
+
+      <h2>Code</h2>
+      <p>
+        .sb downloader is <a href="https://github.com/forkphorus/sb-downloader">open source</a>.
+        There is an easy-to-use API.
+      </p>
+
+      <h2>Credits</h2>
+      <p>
+        .sb downloader is of course powered by the <a href="https://scratch.mit.edu/">Scratch</a> API.
+        The <a href="https://stuk.github.io/jszip/">JSZip</a> library is used for creating zip archives.
+      </p>
+
+      <h2>Privacy</h2>
+      <p>
+        In order to access the project token and title, .sb downloader may send the project ID to a server under our control as it can't directly access certain Scratch APIs.
+        The ID may be recorded for up to 24 hours for caching purposes only.
+      </p>
+    </main>
+
+    <script type="module">
+      import JSZip from 'jszip';
+      import {downloadProjectFromID, downloadLegacyProjectFromID} from './src/export-web.js';
+
+      /**
+       * @param {string} text
+       * @returns {string|null}
+       */
+      const extractProjectId = (text) => {
+        const match = text.match(/\d+/);
+        if (match) {
+          return match[0];
         }
-        return query;
-      }
-
-      // Sets a query string value without reloading the page.
-      function setQuery(key, value) {
-        const query = getQuery();
-        query[key] = value;
-        let url = '?';
-        for (const key of Object.keys(query)) {
-          const value = query[key];
-          // omit parameters with empty keys or values
-          // allows '' as a value to remove a parameter
-          if (!key || !value) {
-            continue;
-          }
-          if (url.length > 1) {
-            url += '&';
-          }
-          url += encodeURIComponent(key) + '=' + encodeURIComponent(value);
-        }
-        history.replaceState({}, '', url);
-      }
-
-      // Project ID input
-      projectInput.addEventListener('focus', function() {
-        if (getId()) {
-          projectInput.select();
-        }
-      })
-      projectInput.addEventListener('input', function() {
-        const id = getId() || '';
-        projectInput.value = 'https://scratch.mit.edu/projects/' + id;
-        setButtonsEnabled(!!id);
-        resetAssets();
-        hideProgress();
-        removeDownloadLink();
-      });
-      function extractId(input) {
-        const match = projectInput.value.match(/\d+/);
-        return match ? match[0] : null;
-      }
-      function getId() {
-        return extractId(projectInput.value);
-      }
-
-      // Type input
-      for (const button of downloadButtons) {
-        button.addEventListener('click', function() {
-          loadInput(getId(), button.dataset.type);
-        });
-      }
-
-      function setInputEnabled(enabled) {
-        projectInput.disabled = !enabled;
-      }
-      function setButtonsEnabled(enabled) {
-        for (const el of downloadButtons) {
-          el.disabled = !enabled;
-        }
-      }
-      function disableInputs() {
-        setInputEnabled(false);
-        setButtonsEnabled(false);
-      }
-      function enableInputs() {
-        setInputEnabled(true);
-        setButtonsEnabled(true);
-      }
-
-      // Progress bar methods
-
-      // Sets the current progress. Expects a number between 0 and 1
-      function setProgress(progress) {
-        progressBarFill.style.width = (10 + progress * 90) + '%';
-      }
-      // Resets the progress bar
-      function resetProgress() {
-        setProgress(0);
-        setProgressState('Loading...', '');
-      }
-      // Shows the progress bar
-      function showProgress() {
-        progressBarContainer.hidden = false;
-      }
-      // Hides the progress bar
-      function hideProgress() {
-        progressBarContainer.hidden = true;
-      }
-      // Sets the text and 'state' of the progress bar (usually changes color)
-      function setProgressState(message, state) {
-        progressBarText.textContent = message;
-        progressBarFill.setAttribute('state', state || '');
-      }
-
-      // Install progress hooks
-      let finishedTasks = 0;
-      let totalTasks = 0;
-      function updateProgressBarHooks() {
-        setProgress(finishedTasks / totalTasks);
-        setProgressState('\u23f3 Downloading project files (' + finishedTasks + '/' + totalTasks + ')');
-      }
-      SBDL.progressHooks.start = function() {
-        finishedTasks = 0;
-        totalTasks = 0;
+        return null;
       };
-      SBDL.progressHooks.newTask = function() {
-        totalTasks++;
-        updateProgressBarHooks();
-      };
-      SBDL.progressHooks.finishTask = function() {
-        finishedTasks++;
-        updateProgressBarHooks();
-      };
 
-      // Asset listing
-      assetTableToggle.addEventListener('change', function(e) {
-        toggleAssets(e.target.checked);
-        e.preventDefault();
-      });
-      // Toggles the asset viewer. Might load or reset the asset list.
-      function toggleAssets(enabled) {
-        if (enabled) {
-          assetTableContainer.hidden = false;
-          setQuery('assets', 'on');
-          if (lastResult && lastResult.files) {
-            displayAssets(lastResult.files);
-          }
+      /**
+       * @param {URLSearchParams} params
+       */
+      const replaceParameters = (params) => {
+        const stringified = params.toString();
+        // If there are no parameters, remove the query entirely
+        if (stringified) {
+          history.replaceState('', '', `?${stringified}`);
         } else {
-          assetTableContainer.hidden = true;
-          setQuery('assets', '');
-          resetAssets();
+          history.replaceState('', '', location.pathname);
         }
-        assetTableToggle.checked = enabled;
-      }
-      // Removes all existing assets in the list
-      function resetAssets() {
-        while (assetTable.firstChild) {
-          assetTable.removeChild(assetTable.firstChild);
+      };
+
+      const projectInput = document.querySelector('.project-input');
+      const downloadLatestButton = document.querySelector('.download-latest-button');
+      const downloadLegacyButton = document.querySelector('.download-legacy-button');
+      const progressOuter = document.querySelector('.progress-outer');
+      const progressFill = document.querySelector('.progress-fill');
+      const progressText = document.querySelector('.progress-text');
+      const downloadsOuter = document.querySelector('.downloads-outer');
+      const assetViewerPlaceholder = document.querySelector('.asset-viewer-placeholder');
+      const assetViewerOptionOuter = document.querySelector('.asset-viewer-option-outer');
+      const assetViewerOption = document.querySelector('.asset-viewer-option');
+      const assetViewerNotSupported = document.querySelector('.asset-viewer-not-supported');
+      const assetViewerOuter = document.querySelector('.asset-viewer-outer');
+
+      const SCRATCH_PREFIX = 'https://scratch.mit.edu/projects/';
+      const PROGRESS_STATE_WORKING = 'working';
+      const PROGRESS_STATE_DONE = 'done';
+      const PROGRESS_STATE_ERROR = 'error';
+      const ASSET_VIEWER_PROJECT_TYPES = ['sb2', 'sb3'];
+
+      projectInput.addEventListener('input', (e) => {
+        removeDownloadLinks();
+        hideProgress();
+        resetAssetViewer();
+        cancelOngoingDownload();
+        replaceParameters(new URLSearchParams());
+
+        const projectId = extractProjectId(e.target.value);
+        e.target.value = projectId ? `${SCRATCH_PREFIX}${projectId}` : SCRATCH_PREFIX;
+      });
+      projectInput.addEventListener('focus', (e) => {
+        const projectId = extractProjectId(e.target.value);
+        if (projectId) {
+          e.target.select();
         }
-      }
-      // Displays a list of files
-      function displayAssets(files) {
-        resetAssets();
+      });
 
-        // Used to decode text in bufferToString()
-        const decoder = new TextDecoder('utf8');
-
-        function bufferToString(buffer) {
-          return decoder.decode(new Uint8Array(buffer));
+      projectInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.target.blur();
+          downloadProject(false);
         }
+      });
+      downloadLatestButton.addEventListener('click', () => {
+        downloadProject(false);
+      });
+      downloadLegacyButton.addEventListener('click', () => {
+        downloadProject(true);
+      });
 
-        function getPreview(file) {
-          const path = file.path;
-          const extension = path.split('.').pop();
+      const showAssetViewer = async (project) => {
+        const TEXT_EXTENSIONS = ['json'];
+        const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'bmp', 'webp'];
+        const SOUND_EXTENSIONS = ['mp3', 'wav', 'ogg'];
 
-          const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'svg'];
-          const AUDIO_EXTENSIONS = ['mp3', 'wav'];
-          const TEXT_EXTENSIONS = ['json'];
+        removeAssetViewerItems();
 
-          // Returns an element indicating that this asset cannot be previewed.
-          function cannotPreview() {
-            const text = document.createElement('i');
-            text.textContent = 'cannot preview';
-            return text;
-          }
+        assetViewerOuter.hidden = false;
 
-          if (IMAGE_EXTENSIONS.includes(extension)) {
-            if (!(file.data instanceof ArrayBuffer)) {
-              return cannotPreview();
-            }
+        const assetViewerInner = document.createElement('tbody');
+        assetViewerInner.className = 'asset-viewer-inner';
+        assetViewerOuter.appendChild(assetViewerInner);
 
-            // Images are loaded by setting an <img> src to a Blob URL
-            const type = extension === 'svg' ? 'svg+xml' : extension;
-            const blob = new Blob([file.data], {type: 'image/' + type});
-            const url = URL.createObjectURL(blob);
-            const img = document.createElement('img');
-            img.src = url;
-            return img;
-          } else if (AUDIO_EXTENSIONS.includes(extension)) {
-            if (!(file.data instanceof ArrayBuffer)) {
-              return cannotPreview();
-            }
+        const zip = await JSZip.loadAsync(project.arrayBuffer);
+        for (const filename of Object.keys(zip.files)) {
+          const rowElement = document.createElement('tr');
+          rowElement.className = 'asset-viewer-row';
+          const idElement = document.createElement('td');
+          idElement.textContent = filename;
+          idElement.className = 'asset-viewer-id';
+          const contentElement = document.createElement('td');
+          contentElement.className = 'asset-viewer-content';
+          rowElement.appendChild(idElement);
+          rowElement.appendChild(contentElement);
 
-            // Sounds are loaded by loading a Blob URL in an <audio> with controls enabled
-            const blob = new Blob([file.data]);
-            const url = URL.createObjectURL(blob);
+          const extension = filename.split('.').pop();
+
+          if (TEXT_EXTENSIONS.includes(extension)) {
+            const text = await zip.file(filename).async('text');
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.readOnly = true;
+            contentElement.appendChild(textarea);
+          } else if (IMAGE_EXTENSIONS.includes(extension)) {
+            const base64 = await zip.file(filename).async('base64');
+            const type = extension === 'svg' ? 'image/svg+xml' : `image/${extension}`;
+            const image = document.createElement('img');
+            image.src = `data:${type};base64,${base64}`;
+            contentElement.appendChild(image);
+          } else if (SOUND_EXTENSIONS.includes(extension)) {
+            const base64 = await zip.file(filename).async('base64');
             const audio = document.createElement('audio');
-            audio.src = url;
-            // enabling controls ensures that it will be visible
+            audio.src = `data:;base64,${base64}`;
             audio.controls = true;
             audio.autoplay = false;
-            return audio;
-          } else if (TEXT_EXTENSIONS.includes(extension)) {
-            // Text things are loaded using a readonly <textarea>
-            const textarea = document.createElement('textarea');
-            textarea.readOnly = true;
-            textarea.textContent = file.data;
-            return textarea;
+            contentElement.appendChild(audio);
+          } else {
+            const errorMessage = document.createElement('div');
+            errorMessage.textContent = `Unknown extension: ${extension}`;
           }
 
-          return cannotPreview();
+          assetViewerInner.appendChild(rowElement);
+        }
+      };
+      const removeAssetViewerItems = () => {
+        const assetViewerInner = document.querySelector('.asset-viewer-inner');
+        if (assetViewerInner) {
+          // If the asset viewer is still being created, this won't stop its CPU work, but the result
+          // won't be displayed.
+          assetViewerInner.remove();
+        }
+        assetViewerOuter.hidden = true;
+      };
+      const resetAssetViewer = () => {
+        assetViewerOption.checked = false;
+        assetViewerPlaceholder.hidden = false;
+        assetViewerOptionOuter.hidden = true;
+        assetViewerNotSupported.hidden = true;
+        removeAssetViewerItems();
+      };
+
+      assetViewerOption.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          showAssetViewer(mostRecentProject);
+        } else {
+          removeAssetViewerItems();
+        }
+      });
+
+      const removeDownloadLinks = () => {
+        while (downloadsOuter.firstChild) {
+          const link = downloadsOuter.firstChild;
+          if (link.href) {
+            URL.revokeObjectURL(link.href);
+          }
+          link.remove();
+        }
+      };
+
+      const setProgress = (text, state, progress) => {
+        progressOuter.hidden = false;
+        progressFill.style.width = `${10 + progress * 90}%`;
+        progressOuter.dataset.state = state;
+        if (progressText.textContent !== text) {
+          progressText.textContent = text;
+        }
+      };
+      const resetProgress = () => {
+        setProgress('⏳ Downloading project metadata...', PROGRESS_STATE_WORKING, 0);
+      };
+      const hideProgress = () => {
+        progressOuter.hidden = true;
+      };
+
+      let mostRecentProject = null;
+      /** @type {AbortController} */
+      let globalAbortController = null;
+
+      const cancelOngoingDownload = () => {
+        if (globalAbortController) {
+          globalAbortController.abort();
+          globalAbortController = null;
+        }
+      };
+
+      const downloadProject = async (legacy) => {
+        const projectId = extractProjectId(projectInput.value);
+        if (!projectId) {
+          alert('Paste a project ID or URL into the input above first.');
+          return;
         }
 
-        for (const file of files) {
-          const row = document.createElement('tr');
+        try {
+          cancelOngoingDownload();
+          const localAbortController = new AbortController();
+          globalAbortController = localAbortController;
 
-          const nameCell = document.createElement('td');
-          const previewCell = document.createElement('td');
+          const urlParams = new URLSearchParams();
+          urlParams.set('id', projectId);
+          if (legacy) {
+            urlParams.set('legacy', 'true');
+          } else {
+            urlParams.delete('legacy');
+          }
+          replaceParameters(urlParams);
 
-          nameCell.classList.add('name');
-          nameCell.appendChild(document.createTextNode(file.path));
+          mostRecentProject = null;
+          resetAssetViewer();
 
-          previewCell.classList.add('preview');
-          previewCell.appendChild(getPreview(file));
+          removeDownloadLinks();
+          resetProgress();
 
-          row.appendChild(nameCell);
-          row.appendChild(previewCell);
+          const progressCallback = (type, loaded, total) => {
+            let text = type;
+            if (type === 'project') {
+              text = '⏳ Downloading project data...';
+            } else if (type === 'assets') {
+              text = `⏳ Downloading assets (${loaded}/${total})...`;
+              setProgress()
+            } else if (type === 'compress') {
+              text = '⏳ Compressing project...';
+            }
+            setProgress(text, PROGRESS_STATE_WORKING, loaded / total);
+          };
 
-          assetTable.appendChild(row);
-        }
-      }
+          const options = {
+            onProgress: progressCallback,
+            signal: localAbortController.signal
+          };
 
-      // Loads the currently input project
-      function loadInput(id, type) {
-        setQuery('id', id);
-        setQuery('type', type);
+          const downloadFunction = legacy ? downloadLegacyProjectFromID : downloadProjectFromID;
+          const project = await downloadFunction(projectId, options);
+          mostRecentProject = project;
 
-        removeDownloadLink();
-        disableInputs();
-        resetAssets();
-        resetProgress();
-        showProgress();
+          const title = project.title ? `${project.title} (${projectId})` : projectId;
+          const type = project.type;
+          const name = `${title}.${type}`;
+          const blob = new Blob([project.arrayBuffer]);
+          const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
+          const url = URL.createObjectURL(blob);
 
-        downloadProject(id, type)
-          .then(() => {
-            setProgressState('\u2705 Done', 'success');
-            enableInputs();
-            setProgress(1);
-          })
-          .catch((err) => {
-            console.error(err);
-            let error = '\u274c ';
-            if (err && err.name === 'CannotAccessProjectError') {
-              error += 'Project is unshared, never existed, or the ID is invalid.';
+          const downloadElement = document.createElement('a');
+          downloadElement.textContent = `Download ${name} (${sizeMB}MB)`;
+          downloadElement.download = name;
+          downloadElement.href = url;
+          downloadsOuter.appendChild(downloadElement);
+          downloadElement.click();
+
+          const assetViewerSupported = ASSET_VIEWER_PROJECT_TYPES.includes(type);
+          assetViewerPlaceholder.hidden = true;
+          assetViewerOptionOuter.hidden = !assetViewerSupported;
+          assetViewerNotSupported.hidden = assetViewerSupported;
+
+          setProgress('✅ Done', PROGRESS_STATE_DONE, 1);
+
+          globalAbortController = null;
+        } catch (e) {
+          console.error(e);
+
+          if (e && e.name === 'AbortError') {
+            return;
+          }
+
+          let errorMessage = '❌ ';
+          if (e && e.name === 'CanNotAccessProjectError') {
+            if (legacy) {
+              errorMessage += 'The project does not exist or it was made after January 2, 2019 so no legacy version is available.'
             } else {
-              error += 'Project is not available as a .' + type;
+              errorMessage += 'The project does not exist or the ID is invalid.'
             }
-            if (err && err.message) {
-              if (err.probableType) {
-                error += ' (It is available as a .' + err.probableType + ')';
-              } else if (err.message.includes('404') && type === 'sb3') {
-                error += ' (Project does not exist)';
-              }
-            }
-            setProgressState(error, 'error');
-            enableInputs();
-            setProgress(1);
-          });
-      }
-      // Starts loading a project. Downloads it when complete.
-      function downloadProject(id, type) {
-        lastResult = null;
-        return SBDL.loadProject(id, type)
-          .then((r) => {
-            lastResult = r;
-
-            setProgressState('Creating archive...');
-
-            // Convert the result to a Blob so it's easier to download.
-            // The result can either give us a list of files to put in an archive, or an ArrayBuffer.
-            if (r.type === 'zip') {
-              return SBDL.createArchive(r.files, setProgress);
-            } else if (r.type === 'buffer') {
-              return new Blob([r.buffer]);
-            } else {
-              throw new Error('unknown type: ' + r.type);
-            }
-          })
-          .then((blob) => {
-            // Only display assets if there are some files to preview and they will be visible.
-            if (lastResult.files && !assetTableContainer.hidden) {
-              displayAssets(lastResult.files);
-            }
-
-            const url = URL.createObjectURL(blob);
-            const filename = lastResult.title + '.' + lastResult.extension;
-            const size = blob.size / 1024 / 1024;
-
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.textContent = 'Download ' + filename + ' (' + size.toFixed(2) + ' MiB)';
-            downloadLinkEl.appendChild(a);
-            a.click();
-          });
-      }
-      function removeDownloadLink() {
-        if (downloadLinkEl.firstChild) {
-          downloadLinkEl.removeChild(downloadLinkEl.firstChild);
+          } else {
+            errorMessage += e;
+          }
+          setProgress(errorMessage, PROGRESS_STATE_ERROR, 1);
         }
-      }
+      };
 
-      // Load URL parameters
-      const searchQuery = getQuery();
-      if (searchQuery.id) {
-        projectInput.value = 'https://scratch.mit.edu/projects/' + searchQuery.id;
-      } else {
-        projectInput.focus();
-        setTimeout(function() {
-          projectInput.selectionStart = projectInput.selectionEnd = projectInput.value.length;
-        });
+      if (window.InitialState) {
+        const isLegacy = window.InitialState.isLegacy;
+        downloadProject(isLegacy);
       }
-      setButtonsEnabled(!!getId());
-      if (searchQuery.assets === 'on') {
-        toggleAssets(true);
-      }
-      if (searchQuery.id && searchQuery.type) {
-        loadInput(searchQuery.id, searchQuery.type);
-      }
-    }());
-  </script>
-</body>
-
+    </script>
+  </body>
 </html>
