@@ -391,7 +391,7 @@ export const downloadProjectFromBuffer = async (data, options) => {
   throwIfAborted(options);
 
   if (ArrayBuffer.isView(data)) {
-    data = data.buffer.slice(data.byteOffset, data.byteLength);
+    data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
   }
   const uint8array = new Uint8Array(data);
 
