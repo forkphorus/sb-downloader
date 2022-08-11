@@ -1,0 +1,9 @@
+// Vitest Snapshot v1
+
+exports[`option to disable compression 1`] = `
+{
+  "arrayBuffer": ArrayBuffer [SHA-256 861ee27ba97ac0dee7bf32d8563fb9b4c740addf7371581e2d6cbff4708046f5],
+  "title": "",
+  "type": "sb3",
+}
+`;
