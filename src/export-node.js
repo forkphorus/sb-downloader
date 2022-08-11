@@ -1,4 +1,4 @@
 import environment from './environment.js';
 environment.canAccessScratchAPI = true;
 
-export * from './downloader';
+export * from './downloader.js';
