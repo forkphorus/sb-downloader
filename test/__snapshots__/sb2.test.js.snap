@@ -1,0 +1,9 @@
+// Vitest Snapshot v1
+
+exports[`sb2 project from JSON 1`] = `
+{
+  "arrayBuffer": ArrayBuffer [SHA-256 e1a56dfffa77e29c50166c1e2d1fc05af1dec3a156dc8602c9aa06da098dd546],
+  "title": "",
+  "type": "sb2",
+}
+`;

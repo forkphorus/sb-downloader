@@ -12,6 +12,8 @@ cd sb-downloader
 npm ci
 # For development
 npm run dev
+# Run tests. Requires a decent internet connection.
+npm test
 # For production (output in `dist`)
 npm run build
 npm run preview
