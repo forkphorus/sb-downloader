@@ -28,3 +28,11 @@ test('sb3 project from sb3', async () => {
   expect(project.title).toBe('');
   expect(new Uint8Array(project.arrayBuffer)).toStrictEqual(new Uint8Array(originalData.buffer));
 });
+
+test('sb3 project from sb3 with project.json in a subdirectory', async () => {
+  const fixture = getFixturePath('json-in-subdirectory.sb3');
+  const originalData = fs.readFileSync(fixture);
+  const project = await SBDL.downloadProjectFromBuffer(originalData);
+  expect(project.type).toBe('sb3');
+  expect(new Uint8Array(project.arrayBuffer)).toStrictEqual(new Uint8Array(originalData.buffer));
+});
