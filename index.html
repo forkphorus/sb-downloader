@@ -128,22 +128,36 @@
         margin: 8px 0;
         position: relative;
         width: 100%;
+        box-sizing: border-box;
       }
       .progress-inner {
-        position: absolute;
+        color: rgb(0, 242, 255);
+        transition: .2s color;
+      }
+      .progress-outer[data-state="done"] .progress-inner {
+        color: rgb(30, 255, 0);
+      }
+      .progress-outer[data-state="error"] .progress-inner {
+        color: rgb(255, 0, 0);
+      }
+      .progress-inner, .progress-fill, .progress-border {
         z-index: -1;
+        position: absolute;
         top: 0;
         left: 0;
-        width: 10%;
+        width: 100%;
         height: 100%;
-        background-color: rgba(0, 242, 255, 0.372);
-        transition: .2s width, .2s background-color;
+        box-sizing: border-box;
       }
-      .progress-inner[data-state="done"] {
-        background-color: rgba(30, 255, 0, 0.372);
+      .progress-fill {
+        width: 10%;
+        transition: .2s width;
+        background-color: currentColor;
+        opacity: 0.35;
       }
-      .progress-inner[data-state="error"] {
-        background-color: rgba(255, 0, 0, 0.372);
+      .progress-border {
+        border: 1px solid currentColor;
+        opacity: 0.8;
       }
       .progress-text {
         height: 100%;
@@ -286,7 +300,10 @@
       </div>
 
       <div class="progress-outer" hidden>
-        <div class="progress-inner"></div>
+        <div class="progress-inner">
+          <div class="progress-border"></div>
+          <div class="progress-fill"></div>
+        </div>
         <div class="progress-text">⏳ Loading scripts...</div>
       </div>
       <script>
@@ -391,7 +408,7 @@
       const downloadLatestButton = document.querySelector('.download-latest-button');
       const downloadLegacyButton = document.querySelector('.download-legacy-button');
       const progressOuter = document.querySelector('.progress-outer');
-      const progressInner = document.querySelector('.progress-inner');
+      const progressFill = document.querySelector('.progress-fill');
       const progressText = document.querySelector('.progress-text');
       const downloadsOuter = document.querySelector('.downloads-outer');
       const assetViewerPlaceholder = document.querySelector('.asset-viewer-placeholder');
@@ -527,8 +544,8 @@
 
       const setProgress = (text, state, progress) => {
         progressOuter.hidden = false;
-        progressInner.style.width = `${10 + progress * 90}%`;
-        progressInner.dataset.state = state;
+        progressFill.style.width = `${10 + progress * 90}%`;
+        progressOuter.dataset.state = state;
         if (progressText.textContent !== text) {
           progressText.textContent = text;
         }
