@@ -13,7 +13,7 @@ export class HTTPError extends Error {
   }
 }
 
-export class CannotAccessProjectError extends Error {
+export class CanNotAccessProjectError extends Error {
   constructor (message) {
     super(message);
     this.name = 'CanNotAccessProjectError';

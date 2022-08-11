@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import fetch from 'cross-fetch';
-import {AbortError, CannotAccessProjectError, HTTPError} from './errors.js';
+import {AbortError, CanNotAccessProjectError, HTTPError} from './errors.js';
 import fetchAsArrayBuffer from './safer-fetch.js';
 import fetchAsArrayBufferWithProgress from './fetch-with-progress.js';
 import environment from './environment.js';
@@ -499,7 +499,7 @@ export const getProjectMetadata = async (id, options) => {
         signal: options.signal
       });
       if (response.status === 404) {
-        throw new CannotAccessProjectError(id);
+        throw new CanNotAccessProjectError(`${id} is unshared or does not exist`);
       }
       if (!response.ok) {
         throw new HTTPError(url, response.status);
@@ -507,7 +507,7 @@ export const getProjectMetadata = async (id, options) => {
       const json = await response.json();
       return json;
     } catch (e) {
-      if (e instanceof CannotAccessProjectError || isAbortError(e)) {
+      if (e instanceof CanNotAccessProjectError || isAbortError(e)) {
         throw e;
       } else {
         firstError = e;
@@ -533,7 +533,7 @@ export const downloadProjectFromURL = async (url, options) => {
     }, options.signal);
   } catch (e) {
     if (e instanceof HTTPError && e.status === 404) {
-      throw new CannotAccessProjectError(e.message);
+      throw new CanNotAccessProjectError(e.message);
     }
     throw e;
   }
