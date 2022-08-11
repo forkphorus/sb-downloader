@@ -107,7 +107,9 @@ const options = {
 
 ### Aborting
 
-You can also abort the download after starting it. Note that while we try to stop ongoing and future network activity, some activity may continue for a brief period depending on what step the download process was on. Regardless, the Promise returned by download* should reject (although not necessarily immediately) if abort is called before it resolves.
+In browsers, you can also abort the download after starting it. Note that while we try to stop ongoing and future network activity, some activity may continue for a brief period depending on what step the download process was on. Regardless, the Promise returned by download* should reject (although not necessarily immediately) if abort is called before it resolves.
+
+Requires separate AbortController polyfill in Node.js version older than v15.
 
 ```js
 const abortController = new AbortController();
