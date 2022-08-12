@@ -61,7 +61,7 @@ The primary limiting factors are support for AbortController (for cancelling dow
 const options = {
   // May be called periodically with progress updates.
   onProgress: (type, loaded, total) => {
-    // type is 'project', 'assets', or 'compress'
+    // type is 'metadata', 'project', 'assets', or 'compress'
     console.log(type, loaded / total);
   }
 };

@@ -561,11 +561,17 @@ export const downloadProjectFromURL = async (url, options) => {
  */
 export const downloadProjectFromID = async (id, options) => {
   options = parseOptions(options);
+  if (options.onProgress) {
+    options.onProgress('metadata', 0, 1);
+  }
   let meta;
   try {
     meta = await getProjectMetadata(id, options);
   } catch (e) {
     // This is okay for now.
+  }
+  if (options.onProgress) {
+    options.onProgress('metadata', 1, 1);
   }
   throwIfAborted(options);
   const token = meta && meta.project_token;

@@ -606,13 +606,17 @@
 
           const progressCallback = (type, loaded, total) => {
             let text = type;
-            if (type === 'project') {
+            if (type === 'metadata') {
+              text = '⏳ Downloading project metadata...'
+            } else if (type === 'project') {
               text = '⏳ Downloading project data...';
             } else if (type === 'assets') {
               text = `⏳ Downloading assets (${loaded}/${total})...`;
               setProgress()
             } else if (type === 'compress') {
               text = '⏳ Compressing project...';
+            } else {
+              console.warn(`Unknown progress type: ${type}`);
             }
             setProgress(text, PROGRESS_STATE_WORKING, loaded / total);
           };
