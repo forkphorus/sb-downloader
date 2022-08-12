@@ -25,6 +25,9 @@
     "prepublish": "rollup -c && tsc",
     "test": "vitest run"
   },
+  "bin": {
+    "sbdl": "./src/cli.js"
+  },
   "directories": {
     "test": "test"
   },

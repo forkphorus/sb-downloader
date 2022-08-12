@@ -19,6 +19,24 @@ npm run build
 npm run preview
 ```
 
+## CLI
+
+(Not yet in a release)
+
+```bash
+# Install from npm
+npm install --global @turbowarp/sbdl
+
+# Use project IDs, project URLs, or other URLs to download projects
+# If multiple projects are specified, they will be downloaded sequentially.
+sbdl 60917032
+sbdl https://scratch.mit.edu/projects/60917032/
+sbdl https://packager.turbowarp.org/example.sb3
+
+# To download the legacy version of Scratch project IDs or URLs, put --legacy anywhere
+sbdl --legacy 60917032
+```
+
 ## API
 
 You can .sb downloader from npm:
