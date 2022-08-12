@@ -6,7 +6,7 @@ export default [
     // For Node.js
     input: 'src/export-node.js',
     output: {
-      file: 'lib/bundle-node.js',
+      file: 'lib/bundle-node.cjs',
       format: 'cjs'
     },
     external: ['jszip', 'cross-fetch']
@@ -15,7 +15,7 @@ export default [
     // For browsers using npm
     input: 'src/export-web.js',
     output: {
-      file: 'lib/bundle-web.js',
+      file: 'lib/bundle-web.cjs',
       format: 'cjs'
     },
     external: ['jszip', 'cross-fetch']

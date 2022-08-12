@@ -15,8 +15,8 @@
     "url": "https://github.com/forkphorus/sb-downloader/issues"
   },
   "homepage": "https://forkphorus.github.io/sb-downloader/",
-  "main": "./lib/bundle-node.js",
-  "browser": "./lib/bundle-web.js",
+  "main": "./lib/bundle-node.cjs",
+  "browser": "./lib/bundle-web.cjs",
   "types": "./lib/types/downloader.d.ts",
   "scripts": {
     "dev": "vite",
