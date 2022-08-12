@@ -1,4 +1,4 @@
-const SBDL = require('./lib/bundle-node');
+import * as SBDL from './src/export-node.js';
 
 console.time('Download project');
 SBDL.downloadProjectFromID('60917032', {
