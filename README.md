@@ -80,7 +80,8 @@ const project = await SBDL.downloadProjectFromBuffer(fs.readFileSync('project.js
 const type = project.type;
 // arrayBuffer is an ArrayBuffer of the compressed project data in the format given by type.
 const arrayBuffer = project.arrayBuffer;
-// For shared projects loaded from an ID, this is the title of the project, if any.
+// For projects shared on Scratch and downloaded from an ID, this will be the project title on Scratch if
+// the project is shared. For projects loaded from a URL, this will be inferred based on the project's URL.
 // If the title couldn't be found, this will be an empty string. It is your job to handle that and default to
 // something else such as the project's ID if necessary.
 const title = project.title;
