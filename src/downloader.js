@@ -519,6 +519,18 @@ export const getProjectMetadata = async (id, options) => {
 
 /**
  * @param {string} url
+ * @returns {string}
+ */
+const getProjectTitleFromURL = (url) => {
+  const match = url.match(/\/([^\/]+)\.sb[2|3]?$/);
+  if (match) {
+    return match[1];
+  }
+  return '';
+};
+
+/**
+ * @param {string} url
  * @param {Options} [options]
  * @returns {Promise<DownloadedProject>}
  */
@@ -537,7 +549,9 @@ export const downloadProjectFromURL = async (url, options) => {
     }
     throw e;
   }
-  return downloadProjectFromBuffer(buffer, options);
+  const project = await downloadProjectFromBuffer(buffer, options);
+  project.title = getProjectTitleFromURL(url);
+  return project;
 };
 
 /**
