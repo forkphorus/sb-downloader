@@ -11,8 +11,11 @@ test('progress events received in correct order', async () => {
     const progress = loaded / total;
     if (progress === 0) {
       startedEvents.add(type);
-    } else if (progress === 1) {
-      finishedEvents.add(type);
+    } else {
+      expect(startedEvents.has(type)).toBe(true);
+      if (progress === 1) {
+        finishedEvents.add(type);
+      }
     }
   };
   // Need to use any arbitrary shared project here, preferably a small one.
@@ -20,6 +23,6 @@ test('progress events received in correct order', async () => {
     onProgress
   });
   expect(startedEvents).toStrictEqual(finishedEvents);
-  expect(startedEvents).toStrictEqual(new Set(['project', 'assets', 'compress']));
+  expect(startedEvents).toStrictEqual(new Set(['metadata', 'project', 'assets', 'compress']));
   expect(project).toMatchSnapshot();
 }, 30000);
