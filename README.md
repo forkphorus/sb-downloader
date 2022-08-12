@@ -39,7 +39,7 @@ sbdl --legacy 60917032
 
 ## API
 
-You can .sb downloader from npm:
+You can install .sb downloader from npm:
 
 ```
 npm install @turbowarp/sbdl
