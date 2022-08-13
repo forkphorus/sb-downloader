@@ -21,19 +21,24 @@ npm run preview
 
 ## CLI
 
-(Not yet in a release)
+We have a simple CLI. It's primarily intended to be a simple example of how to use the API, but may be useful on its own anyways.
+
+Install from npm:
 
 ```bash
-# Install from npm
 npm install --global @turbowarp/sbdl
+```
 
-# Use project IDs, project URLs, or other URLs to download projects
-# If multiple projects are specified, they will be downloaded sequentially.
+Use project IDs, project URLs, or other URLs to download projects. If multiple projects are specified, they will be downloaded sequentially.
+
+```bash
 sbdl 60917032
 sbdl https://scratch.mit.edu/projects/60917032/
 sbdl https://packager.turbowarp.org/example.sb3
+```
 
-# To download the legacy version of Scratch project IDs or URLs, put --legacy anywhere
+To download the legacy version of Scratch project IDs or URLs, put --legacy anywhere
+```bash
 sbdl --legacy 60917032
 ```
 
@@ -54,7 +59,7 @@ const SBDL = require('@turbowarp/sbdl');
 If you just want to run it in a website and can't use a package manager, you can use a `<script>` tag:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@turbowarp/sbdl@2.0.1/lib/bundle-standalone.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turbowarp/sbdl@2.1.0/lib/bundle-standalone.min.js"></script>
 <script>
   // .sb downloader is exported as `SBDL` on window
 </script>
@@ -65,9 +70,9 @@ Browsers with full support:
  - Chrome >= 66
  - Safari >= 12.1
  - Firefox >= 57
- - Edge >= 79 (No support for Legacy Edge or IE)
+ - Edge >= 79
 
-The primary limiting factors are support for AbortController (for cancelling downloads) and TextDecoder (for parsing some edge-case projects). You may be able to polyfill these on your own.
+The primary limiting factors are support for AbortController (optional for cancelling downloads) and TextDecoder (for determining the type of pre-compressed projects). You may be able to polyfill these on your own.
 
 ### Simple usage
 
@@ -84,12 +89,15 @@ const options = {
   }
 };
 
-// Download using any of these methods.
-// These return a Promise that eventually resolves or rejects.
-// Using async functions is recommended.
+// Download using any of these methods. These return a Promise that eventually resolves or rejects.
+// They all return the same type of object documented further below.
+// If you have a Scratch project ID:
 const project = await SBDL.downloadProjectFromID('60917032', options);
 const project = await SBDL.downloadLegacyProjectFromID('60917032', options);
+// If you have a direct URL to download the project.json or compressed project:
+// The URL MUST be a direct URL. Links like https://scratch.mit.edu/projects/104 will NOT work.
 const project = await SBDL.downloadProjectFromURL('https://packager.turbowarp.org/example.sb3', options);
+// If you already downloaded the project.json or compressed project:
 const project = await SBDL.downloadProjectFromJSON(fs.readFileSync('project.json', 'utf-8'), options);
 const project = await SBDL.downloadProjectFromBuffer(fs.readFileSync('project.json'), options);
 
@@ -109,6 +117,8 @@ const title = project.title;
 
 There are options to configure how projects should be compressed. Projects are compressed by default in a way that is fully deterministic and reproducible -- the same project should always output the exact same set of bytes. We expect that most people will want to use the default settings.
 
+If the project we receive is already a compressed project, it will be returned as-is without modification and these options will be ignored.
+
 ```js
 const options = {
   // The date to use as the "last modified" time for the files inside generated projects.
@@ -126,9 +136,9 @@ const options = {
 
 ### Aborting
 
-In browsers, you can also abort the download after starting it. Note that while we try to stop ongoing and future network activity, some activity may continue for a brief period depending on what step the download process was on. Regardless, the Promise returned by download* should reject (although not necessarily immediately) if abort is called before it resolves.
+In browsers, you can also abort the download after starting it. Note that while we try to stop ongoing and future network activity, some activity may continue for a brief period depending on what step the download process was on. Regardless, the Promise returned by download* should eventually reject if abort is called before it resolves.
 
-Requires separate AbortController polyfill in Node.js version older than v15.
+Requires separate AbortController polyfill in Node.js version older than v15 and some older browsers.
 
 ```js
 const abortController = new AbortController();
@@ -142,7 +152,11 @@ SBDL.downloadProjectFromID('60917032', options)
     // ...
   })
   .catch((error) => {
-    // ...
+    if (error && error.name === 'AbortError') {
+      // Aborted...
+    } else {
+      // Some other error...
+    }
   });
 
 // Cancel the download after 1 second
@@ -151,7 +165,7 @@ setTimeout(() => {
 }, 1000);
 ```
 
-If you absolutely need to cancel all activity immediately, you can download projects from a Worker instead, which will also prevent downloading from causing slowdowns on the main thread.
+If you absolutely need to cancel all activity immediately, you can run the downloader in a Worker and terminate that Worker to cancel it. This will also prevent the downloader from causing lag on the main thread.
 
 ### Fetching metadata
 
@@ -159,8 +173,6 @@ If you absolutely need to cancel all activity immediately, you can download proj
 // This method fetches the project's metadata from https://api.scratch.mit.edu/projects/id
 // Example data: https://api.scratch.mit.edu/projects/104
 // Returned promise rejects when the project is unshared.
-// In browser environments, this will talk to a server we run instead of the Scratch API directly.
-// See the "Privacy" section below for more information.
 // We use this internally for fetching project tokens and titles. We export it in case you find it useful too.
 const metadata = await SBDL.getProjectMetadata('60917032');
 ```
