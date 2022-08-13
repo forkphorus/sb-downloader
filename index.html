@@ -633,7 +633,9 @@
           const title = project.title ? `${project.title} (${projectId})` : projectId;
           const type = project.type;
           const name = `${title}.${type}`;
-          const blob = new Blob([project.arrayBuffer]);
+          const blob = new Blob([project.arrayBuffer], {
+            type: `application/x.scratch.${type}`
+          });
           const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
           const url = URL.createObjectURL(blob);
 
