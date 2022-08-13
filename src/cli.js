@@ -55,6 +55,7 @@ const CLEAR = `${RESET}${ESCAPE}1K\r`;
 const BG_WHITE = `${ESCAPE}107m`;
 const FG_BLACK = `${ESCAPE}30m`;
 const FG_RED = `${ESCAPE}31m`;
+const FG_GREEN = `${ESCAPE}32m`;
 
 const clearProgress = () => {
   process.stdout.write(CLEAR);
@@ -143,7 +144,7 @@ const run = async () => {
     await fs.writeFile(filename, new Uint8Array(downloadedProject.arrayBuffer));
 
     clearProgress();
-    console.log(`Saved to: ${filename}`);
+    console.log(`${FG_GREEN}Saved to: ${filename}${RESET}`);
   }
 };
 
