@@ -21,7 +21,7 @@ npm run preview
 
 ## CLI
 
-We have a simple CLI. It's primarily intended to be a simple example of how to use the API, but may be useful on its own anyways.
+We have a simple CLI. It's primarily intended to be a simple example of how to use the API, but may be useful on its own anyways. Probably requires Node version 14 or later.
 
 Install from npm:
 
