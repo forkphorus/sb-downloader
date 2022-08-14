@@ -231,7 +231,7 @@ const options = {
 The standalone version loaded via `<script>` tag also re-exports some internal libraries so that you don't have to add another copy if you want to use them.
 
 ```html
-<script src=".../bundle-standalone.min.js"></script>
+<script src="https://.../bundle-standalone.min.js"></script>
 <script>
   // https://stuk.github.io/jszip/
   var JSZip = SBDL.JSZip;
