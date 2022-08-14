@@ -138,7 +138,7 @@ test('process compressed sb2', async () => {
   expect(project).toMatchSnapshot();
 });
 
-test('process compressed sb3 and overwrite', async () => {
+test('overwrite compressed sb3', async () => {
   const overwriteJSON = vi.fn((type, data) => {
     expect(type).toBe('sb3');
     expect(data.targets[0].name).toBe('Stage');
@@ -156,7 +156,7 @@ test('process compressed sb3 and overwrite', async () => {
   expect(await zip.file('project.json').async('text')).toBe('{"e":["f","g",3]}');
 });
 
-test('process compressed sb3 with JSON in subdirectory and overwrite', async () => {
+test('process and overwrite compressed sb3 with JSON in subdirectory', async () => {
   const processJSON = vi.fn(async (type, data) => {
     expect(overwriteJSON).toHaveBeenCalledTimes(0);
     expect(type).toBe('sb3');

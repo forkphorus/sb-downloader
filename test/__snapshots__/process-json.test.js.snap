@@ -16,6 +16,14 @@ exports[`overwrite JSON sb3 1`] = `
 }
 `;
 
+exports[`overwrite compressed sb3 1`] = `
+{
+  "arrayBuffer": ArrayBuffer [SHA-256 df8b90c6e5076e7f77883335bb93fb4681c29bad6cb9328c4211b11b0f569baf],
+  "title": "",
+  "type": "sb3",
+}
+`;
+
 exports[`process JSON sb2 1`] = `
 {
   "arrayBuffer": ArrayBuffer [SHA-256 3caf88a05d2a18a9eabc9d8db90b1c8282a12916cab141b70d821d03eda3eb5d],
@@ -27,6 +35,14 @@ exports[`process JSON sb2 1`] = `
 exports[`process JSON sb3 1`] = `
 {
   "arrayBuffer": ArrayBuffer [SHA-256 36e8b445404a8072426a582dbc689028e49e391d301860ecc1df92ab98dbf527],
+  "title": "",
+  "type": "sb3",
+}
+`;
+
+exports[`process and overwrite compressed sb3 with JSON in subdirectory 1`] = `
+{
+  "arrayBuffer": ArrayBuffer [SHA-256 adf166379ca1e198d366a5aa3ceaac54d4a7dbdf3cc48b025fc0d65343614f08],
   "title": "",
   "type": "sb3",
 }
@@ -48,25 +64,9 @@ exports[`process compressed sb3 1`] = `
 }
 `;
 
-exports[`process compressed sb3 and overwrite 1`] = `
-{
-  "arrayBuffer": ArrayBuffer [SHA-256 df8b90c6e5076e7f77883335bb93fb4681c29bad6cb9328c4211b11b0f569baf],
-  "title": "",
-  "type": "sb3",
-}
-`;
-
 exports[`process compressed sb3 with JSON in subdirectory 1`] = `
 {
   "arrayBuffer": ArrayBuffer [SHA-256 52fa4c6fcffc48214861e5ad8f37f79b2a11e567d28674e10dd32f7e4bc5af2c],
-  "title": "",
-  "type": "sb3",
-}
-`;
-
-exports[`process compressed sb3 with JSON in subdirectory and overwrite 1`] = `
-{
-  "arrayBuffer": ArrayBuffer [SHA-256 adf166379ca1e198d366a5aa3ceaac54d4a7dbdf3cc48b025fc0d65343614f08],
   "title": "",
   "type": "sb3",
 }
