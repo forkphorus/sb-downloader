@@ -6,9 +6,13 @@ import fetchAsArrayBufferWithProgress from './fetch-with-progress.js';
 import environment from './environment.js';
 
 /**
+ * @typedef {'sb'|'sb2'|'sb3'} ProjectType
+ */
+
+/**
  * @typedef DownloadedProject
  * @property {string} title
- * @property {'sb'|'sb2'|'sb3'} type
+ * @property {ProjectType} type
  * @property {ArrayBuffer} arrayBuffer
  */
 
@@ -19,6 +23,8 @@ import environment from './environment.js';
  * @property {boolean} [compress] Whether to compress generated projects or not. Compressed projects take longer to generate but are much smaller. Defaults to true.
  * @property {AbortSignal} [signal] An AbortSignal that can be used to cancel the download.
  * @property {string} [assetHost] The URL from which to download assets from. $id is replaced with the asset ID (md5ext).
+ * @property {(type: ProjectType, data: Readonly<unknown>) => void | Promise<void>} [processJSON]
+ * @property {(type: ProjectType, data: unknown) => unknown | Promise<unknown>} [overwriteJSON]
  */
 
 /**
@@ -44,6 +50,24 @@ const throwIfAborted = (options) => {
   if (options.signal && options.signal.aborted) {
     throw new AbortError();
   }
+};
+
+/**
+ * @param {ProjectType} type
+ * @param {unknown} data
+ * @param {Options} options
+ * @returns {string} Stringified JSON object
+ */
+const processJSON = async (type, data, options) => {
+  if (options.processJSON) {
+    await options.processJSON(type, data);
+    throwIfAborted(options);
+  }
+  if (options.overwriteJSON) {
+    data = await options.overwriteJSON(type, data);
+    throwIfAborted(options);
+  }
+  return JSON.stringify(data);
 };
 
 const isAbortError = (error) => error && error.name === 'AbortError';
@@ -168,7 +192,7 @@ const downloadScratch2 = (projectData, options, progressTarget) => {
   return downloadAssets([...costumes, ...sounds])
     .then((filesToAdd) => {
       // Project JSON is mutated during loading, so add it at the end.
-      zip.file('project.json', JSON.stringify(projectData));
+      zip.file('project.json', processJSON('sb2', projectData, options));
 
       // Add files to the zip at the end so the order will be consistent.
       for (const {path, data} of filesToAdd) {
@@ -259,7 +283,7 @@ const downloadScratch3 = async (projectData, options, progressTarget) => {
     };
   };
 
-  zip.file('project.json', JSON.stringify(projectData));
+  zip.file('project.json', processJSON('sb3', projectData, options));
 
   const targets = projectData.targets;
   const costumes = flat(targets.map((t) => t.costumes || []));
@@ -432,12 +456,19 @@ export const downloadProjectFromBuffer = async (data, options) => {
 
   throwIfAborted(options);
 
-  let needToReZip = false;
-  if (options.date) {
-    // To honor the requested date, we must rezip the project.
-    needToReZip = true;
+  if (options.processJSON) {
+    await options.processJSON(type, projectData);
+    throwIfAborted(options);
   }
+
+  const needToReZip = options.date || options.overwriteJSON;
   if (needToReZip) {
+    if (options.overwriteJSON) {
+      const newJSON = await options.overwriteJSON(type, projectData);
+      throwIfAborted(options);
+      zip.file(projectDataFile.name, JSON.stringify(newJSON));
+    }
+
     data = await generateZip(zip, options);
     throwIfAborted(options);
   }
