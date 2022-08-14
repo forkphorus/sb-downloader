@@ -59,9 +59,10 @@ const SBDL = require('@turbowarp/sbdl');
 If you just want to run it in a website and can't use a package manager, you can use a `<script>` tag:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@turbowarp/sbdl@2.1.0/lib/bundle-standalone.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turbowarp/sbdl@2.2.0/lib/bundle-standalone.min.js"></script>
 <script>
   // .sb downloader is exported as `SBDL` on window
+  // See the "Standalone version" below for more information specifically about the standalone version
 </script>
 ```
 
