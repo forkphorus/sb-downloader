@@ -65,7 +65,10 @@ const processJSON = async (type, data, options) => {
     throwIfAborted(options);
   }
   if (options.overwriteJSON) {
-    data = await options.overwriteJSON(type, data);
+    const newData = await options.overwriteJSON(type, data);
+    if (newData) {
+      data = newData;
+    }
     throwIfAborted(options);
   }
   return ExtendedJSON.stringify(data);
@@ -458,14 +461,17 @@ export const downloadProjectFromBuffer = async (data, options) => {
     throwIfAborted(options);
   }
 
-  const needToReZip = options.date || options.overwriteJSON;
-  if (needToReZip) {
-    if (options.overwriteJSON) {
-      const newJSON = await options.overwriteJSON(type, projectData);
-      throwIfAborted(options);
+  let needToReZip = !!options.date;
+
+  if (options.overwriteJSON) {
+    const newJSON = await options.overwriteJSON(type, projectData);
+    if (newJSON) {
+      needToReZip = true;
       zip.file(projectDataFile.name, ExtendedJSON.stringify(newJSON));
     }
+  }
 
+  if (needToReZip) {
     data = await generateZip(zip, options);
     throwIfAborted(options);
   }

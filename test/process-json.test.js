@@ -156,6 +156,25 @@ test('overwrite compressed sb3', async () => {
   expect(await zip.file('project.json').async('text')).toBe('{"e":["f","g",3]}');
 });
 
+test('leaves original project data as-is if overwriteJSON returns nothing on JSON sb3', async () => {
+  const input = fs.readFileSync(getFixturePath('minimal-sb3.json'));
+  const project = await SBDL.downloadProjectFromBuffer(input, {
+    overwriteJSON: () => {}
+  });
+  expect(project).toMatchSnapshot();
+});
+
+test('does not recompress if overwriteJSON returns nothing on compressed sb3', async () => {
+  const input = fs.readFileSync(getFixturePath('167118244.sb3'));
+  const project = await SBDL.downloadProjectFromBuffer(input, {
+    onProgress: (type) => {
+      expect(type).not.toBe('compress');
+    },
+    overwriteJSON: () => {}
+  });
+  expect(project).toMatchSnapshot();
+});
+
 test('process and overwrite compressed sb3 with JSON in subdirectory', async () => {
   const processJSON = vi.fn(async (type, data) => {
     expect(overwriteJSON).toHaveBeenCalledTimes(0);

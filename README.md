@@ -217,12 +217,12 @@ const options = {
   // The result returned does not even need to be a valid Scratch project.json if you don't want it to be.
   // You may return a Promise, in which case the downloader will wait for your promise to resolve.
   // type is either 'sb2' or 'sb3'
-  // You MUST return something to use as the project data; modifying it in-place is not enough.
+  // Modifying projectData is NOT enough. You MUST return an object.
+  // If no value is returned, the original data will be left as-is.
   overwriteJSON: (type, projectData) => {
     if (type === 'sb3') {
       return optimize(projectData);
     }
-    return projectData;
   }
 };
 ```
