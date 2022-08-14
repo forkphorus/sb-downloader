@@ -1,6 +1,14 @@
 // Vitest Snapshot v1
 
-exports[`date defaults to a constant arbitrary time 1`] = `
+exports[`date defaults to arbitrary time for sb2 JSON project 1`] = `
+{
+  "arrayBuffer": ArrayBuffer [SHA-256 3caf88a05d2a18a9eabc9d8db90b1c8282a12916cab141b70d821d03eda3eb5d],
+  "title": "",
+  "type": "sb2",
+}
+`;
+
+exports[`date defaults to arbitrary time for sb3 JSON project 1`] = `
 {
   "arrayBuffer": ArrayBuffer [SHA-256 36e8b445404a8072426a582dbc689028e49e391d301860ecc1df92ab98dbf527],
   "title": "",
@@ -8,9 +16,33 @@ exports[`date defaults to a constant arbitrary time 1`] = `
 }
 `;
 
-exports[`date option 1`] = `
+exports[`date is honored on JSON sb2 project 1`] = `
+{
+  "arrayBuffer": ArrayBuffer [SHA-256 4d13bcef784157ee2f68e3914951f31181e3e2d151b7d8e6bae7b6b91ade8578],
+  "title": "",
+  "type": "sb2",
+}
+`;
+
+exports[`date is honored on JSON sb3 project 1`] = `
 {
   "arrayBuffer": ArrayBuffer [SHA-256 ba0c40627982515f228f62dbe8b18fbad476f7e6294d78b7a794f354f42afa0f],
+  "title": "",
+  "type": "sb3",
+}
+`;
+
+exports[`date is honored on compressed sb2 1`] = `
+{
+  "arrayBuffer": ArrayBuffer [SHA-256 eb54c0ffec40e010ed699143d9d1bbc1e85dbaeef9f40424d9bd16504dd5abb0],
+  "title": "",
+  "type": "sb2",
+}
+`;
+
+exports[`date is honored on compressed sb3 1`] = `
+{
+  "arrayBuffer": ArrayBuffer [SHA-256 6827838da7c824aa97a830e7ad06e65953390d1f00fb647fc4a8cbbf9acfef00],
   "title": "",
   "type": "sb3",
 }

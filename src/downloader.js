@@ -432,6 +432,16 @@ export const downloadProjectFromBuffer = async (data, options) => {
 
   throwIfAborted(options);
 
+  let needToReZip = false;
+  if (options.date) {
+    // To honor the requested date, we must rezip the project.
+    needToReZip = true;
+  }
+  if (needToReZip) {
+    data = await generateZip(zip, options);
+    throwIfAborted(options);
+  }
+
   return {
     title: '',
     type,
