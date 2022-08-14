@@ -66,7 +66,6 @@ test('date is honored on compressed sb2', async () => {
     date
   });
   const zip = await JSZip.loadAsync(project.arrayBuffer);
-  fs.writeFileSync('a.sb2', new Uint8Array(project.arrayBuffer));
   expect(zip.files['project.json'].date.toUTCString()).toBe(date.toUTCString());
   expect(project).toMatchSnapshot();
 });
