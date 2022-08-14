@@ -187,7 +187,7 @@ const downloadScratch2 = async (projectData, options, progressTarget) => {
   ];
   const costumes = flat(targets.map((i) => i.costumes || []));
   const sounds = flat(targets.map((i) => i.sounds || []));
-  const filesToAdd = await downloadAssets([...costumes, ...sounds])
+  const filesToAdd = await downloadAssets([...costumes, ...sounds]);
 
   // Project JSON is mutated during loading, so add it at the end.
   zip.file('project.json', await processJSON('sb2', projectData, options));
