@@ -117,8 +117,6 @@ const title = project.title;
 
 There are options to configure how projects should be compressed. Projects are compressed by default in a way that is fully deterministic and reproducible -- the same project should always output the exact same set of bytes. We expect that most people will want to use the default settings.
 
-If the project we receive is already a compressed project, it will be returned as-is without modification and these options will be ignored.
-
 ```js
 const options = {
   // The date to use as the "last modified" time for the files inside generated projects.
@@ -193,6 +191,34 @@ const options = {
 // The URL to use will vary for each mod. You can usually examine network requests using.
 // your browser's developer tools to find this.
 const project = await SBDL.downloadProjectFromURL(`https://projects.example.com/${id}`);
+```
+
+### Reading and modifying project.json
+
+Sometimes you may want to access the project's project.json, but you also don't want to decompress an entire zip. You may also want to replace the project.json with something else, for example compressing.
+
+These options are only available for sb2 and sb3 projects. For sb projects, these callbacks will silently not be called.
+
+```js
+const options = {
+  // Called to allow you to read the project.json and do any analysis you might need to do.
+  // You may return a Promise, in which case the downloader will wait for your promise to resolve.
+  // type is either 'sb2' or 'sb3'
+  // DO NOT modify projectData in-place.
+  processJSON: (type, projectData) => {
+    console.log(type, projectData);
+  },
+
+  // Called to allow you to overwrite project.json.
+  // This happens at the very end of the download process. The result returned does not even need to be a
+  // valid Scratch project.json if you don't want it to be. You may return a Promise, in which case the
+  // downloader will wait for your promise to resolve.
+  // type is either 'sb2' or 'sb3'
+  // You MUST return something to use as the project data; modifying it in-place is not enough.
+  overwriteJSON: (type, projectData) => {
+    return optimize(projectData);
+  }
+};
 ```
 
 ## Unshared projects
