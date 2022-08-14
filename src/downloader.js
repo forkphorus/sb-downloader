@@ -56,7 +56,7 @@ const throwIfAborted = (options) => {
  * @param {ProjectType} type
  * @param {unknown} data
  * @param {Options} options
- * @returns {string} Stringified JSON object
+ * @returns {Promise<string>} Stringified JSON object
  */
 const processJSON = async (type, data, options) => {
   if (options.processJSON) {
@@ -190,7 +190,7 @@ const downloadScratch2 = async (projectData, options, progressTarget) => {
   const filesToAdd = await downloadAssets([...costumes, ...sounds])
 
   // Project JSON is mutated during loading, so add it at the end.
-  zip.file('project.json', processJSON('sb2', projectData, options));
+  zip.file('project.json', await processJSON('sb2', projectData, options));
 
   // Add files to the zip at the end so the order will be consistent.
   for (const {path, data} of filesToAdd) {
@@ -280,13 +280,13 @@ const downloadScratch3 = async (projectData, options, progressTarget) => {
     };
   };
 
-  zip.file('project.json', processJSON('sb3', projectData, options));
-
   const targets = projectData.targets;
   const costumes = flat(targets.map((t) => t.costumes || []));
   const sounds = flat(targets.map((t) => t.sounds || []));
   const assets = prepareAssets([...costumes, ...sounds]);
   const filesToAdd = await Promise.all(assets.map(addFile));
+
+  zip.file('project.json', await processJSON('sb3', projectData, options));
 
   // Add files to the zip at the end so the order will be consistent.
   for (const {path, data} of filesToAdd) {

@@ -39,6 +39,7 @@ test('process JSON sb2', async () => {
 }, 30000);
 
 test('overwrite JSON sb3', async () => {
+  let hasOverwriteJSONResolved = false;
   const processJSON = vi.fn(async (type, data) => {
     expect(overwriteJSON).toHaveBeenCalledTimes(0);
     expect(type).toBe('sb3');
@@ -52,9 +53,13 @@ test('overwrite JSON sb3', async () => {
   const overwriteJSON = vi.fn(async (type, data) => {
     expect(type).toBe('sb3');
     expect(data.targets[0].name).toBe('Stage');
-    return {
-      a: 'b'
-    };
+    return sleep(100)
+      .then(() => {
+        hasOverwriteJSONResolved = true;
+        return {
+          a: 'b'
+        };
+      });
   });
   const project = await SBDL.downloadProjectFromJSON(fs.readFileSync(getFixturePath('minimal-sb3.json'), 'utf-8'), {
     processJSON,
@@ -62,22 +67,29 @@ test('overwrite JSON sb3', async () => {
   });
   expect(processJSON).toHaveBeenCalledOnce();
   expect(overwriteJSON).toHaveBeenCalledOnce();
+  expect(hasOverwriteJSONResolved).toBe(true);
   expect(project).toMatchSnapshot();
   const zip = await JSZip.loadAsync(project.arrayBuffer);
   expect(await zip.file('project.json').async('text')).toBe('{"a":"b"}');
 }, 30000);
 
 test('overwrite JSON sb2', async () => {
-  const overwriteJSON = vi.fn((type, data) => {
+  let hasOverwriteJSONResolved = false;
+  const overwriteJSON = vi.fn(async (type, data) => {
     expect(type).toBe('sb2');
     expect(data.objName).toBe('Stage');
-    return {
-      c: 'd'
-    };
+    return sleep(100)
+      .then(() => {
+        hasOverwriteJSONResolved = true;
+        return {
+          c: 'd'
+        };
+      });
   });
   const project = await SBDL.downloadProjectFromJSON(fs.readFileSync(getFixturePath('minimal-sb2.json'), 'utf-8'), {
     overwriteJSON
   });
+  expect(hasOverwriteJSONResolved).toBe(true);
   expect(overwriteJSON).toHaveBeenCalledOnce();
   expect(project).toMatchSnapshot();
   const zip = await JSZip.loadAsync(project.arrayBuffer);
