@@ -233,7 +233,11 @@ The standalone version loaded via `<script>` tag also re-exports some internal l
 ```html
 <script src=".../bundle-standalone.min.js"></script>
 <script>
+  // https://stuk.github.io/jszip/
   var JSZip = SBDL.JSZip;
+
+  // https://www.npmjs.com/package/@turbowarp/json
+  var ExtendedJSON = SBDL.ExtendedJSON; 
 </script>
 ```
 
