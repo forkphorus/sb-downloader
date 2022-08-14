@@ -1,7 +1,8 @@
 import fs from 'fs';
+import JSZip from 'jszip';
+import {expect, test, vi} from 'vitest';
 import * as SBDL from '../src/export-node.js';
 import {getFixturePath, arrayBufferSerializer} from './test-utilities.js';
-import {expect, test} from 'vitest';
 
 expect.addSnapshotSerializer(arrayBufferSerializer);
 
@@ -28,3 +29,29 @@ test('sb2 project from sb2', async () => {
   expect(project.title).toBe('');
   expect(new Uint8Array(project.arrayBuffer)).toStrictEqual(new Uint8Array(originalData.buffer));
 });
+
+test('sb2 with non-standard JSON', async () => {
+  for (const fixture of [getFixturePath('non-standard-json-sb2.json'), getFixturePath('non-standard-json.sb2')]) {
+    const processJSON = vi.fn((type, data) => {
+      expect(type).toBe('sb2');
+      expect(data.variables[0].value).toBe(NaN);
+      expect(data.variables[1].value).toBe(Infinity);
+    });
+    const overwriteJSON = vi.fn((type, data) => {
+      expect(type).toBe('sb2');
+      expect(data.variables[0].value).toBe(NaN);
+      expect(data.variables[1].value).toBe(Infinity);
+      return {
+        something: [Infinity, -Infinity, NaN]
+      };
+    });
+    const project = await SBDL.downloadProjectFromBuffer(fs.readFileSync(fixture), {
+      processJSON,
+      overwriteJSON
+    });
+    expect(processJSON).toHaveBeenCalledOnce();
+    expect(overwriteJSON).toHaveBeenCalledOnce();
+    const zip = await JSZip.loadAsync(project.arrayBuffer);
+    expect(await zip.file('project.json').async('text')).toBe('{"something":[Infinity,-Infinity,NaN]}');
+  }
+}, 30000);

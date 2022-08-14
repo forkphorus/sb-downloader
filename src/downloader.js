@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import fetch from 'cross-fetch';
+import * as ExtendedJSON from '@turbowarp/json';
 import {AbortError, CanNotAccessProjectError, HTTPError} from './errors.js';
 import fetchAsArrayBuffer from './safer-fetch.js';
 import fetchAsArrayBufferWithProgress from './fetch-with-progress.js';
@@ -67,7 +68,7 @@ const processJSON = async (type, data, options) => {
     data = await options.overwriteJSON(type, data);
     throwIfAborted(options);
   }
-  return JSON.stringify(data);
+  return ExtendedJSON.stringify(data);
 };
 
 const isAbortError = (error) => error && error.name === 'AbortError';
@@ -338,7 +339,7 @@ export const downloadProjectFromJSON = async (projectData, options) => {
   options = parseOptions(options);
 
   if (typeof projectData === 'string') {
-    projectData = JSON.parse(projectData);
+    projectData = ExtendedJSON.parse(projectData);
   }
 
   let isDoneLoadingProject = false;
@@ -419,8 +420,7 @@ export const downloadProjectFromBuffer = async (data, options) => {
   if (isProbablyJSON(uint8array)) {
     // JSON project. We must download the assets.
     const text = new TextDecoder().decode(data);
-    const projectData = JSON.parse(text);
-    return downloadProjectFromJSON(projectData, options);
+    return downloadProjectFromJSON(text, options);
   }
 
   if (isScratch1Project(uint8array)) {
@@ -448,7 +448,7 @@ export const downloadProjectFromBuffer = async (data, options) => {
   }
 
   const projectDataText = await projectDataFile.async('text');
-  const projectData = JSON.parse(projectDataText);
+  const projectData = ExtendedJSON.parse(projectDataText);
   const type = identifyProjectTypeFromJSON(projectData);
 
   throwIfAborted(options);
@@ -463,7 +463,7 @@ export const downloadProjectFromBuffer = async (data, options) => {
     if (options.overwriteJSON) {
       const newJSON = await options.overwriteJSON(type, projectData);
       throwIfAborted(options);
-      zip.file(projectDataFile.name, JSON.stringify(newJSON));
+      zip.file(projectDataFile.name, ExtendedJSON.stringify(newJSON));
     }
 
     data = await generateZip(zip, options);
