@@ -24,8 +24,8 @@ import environment from './environment.js';
  * @property {boolean} [compress] Whether to compress generated projects or not. Compressed projects take longer to generate but are much smaller. Defaults to true.
  * @property {AbortSignal} [signal] An AbortSignal that can be used to cancel the download.
  * @property {string} [assetHost] The URL from which to download assets from. $id is replaced with the asset ID (md5ext).
- * @property {(type: ProjectType, data: Readonly<unknown>) => void | Promise<void>} [processJSON]
- * @property {(type: ProjectType, data: unknown) => unknown | Promise<unknown>} [overwriteJSON]
+ * @property {(type: ProjectType, data: Readonly<unknown>) => void | Promise<void>} [processJSON] Called during the download to allow readonly access to the project.json
+ * @property {(type: ProjectType, data: unknown) => unknown | Promise<unknown>} [overwriteJSON] Called at the end of the download to allow replacing the project.json with something else
  */
 
 /**
