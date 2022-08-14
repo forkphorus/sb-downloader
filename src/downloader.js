@@ -118,7 +118,7 @@ const isProbablyJSON = (uint8array) => uint8array[0] === '{'.charCodeAt(0);
  * @returns {Promise<JSZip>}
  */
 const downloadScratch2 = (projectData, options, progressTarget) => {
-  const IMAGE_EXTENSIONS = ['svg', 'png', 'jpg', 'jpeg', 'bmp'];
+  const IMAGE_EXTENSIONS = ['svg', 'png', 'jpg', 'gif','bmp'];
   const SOUND_EXTENSIONS = ['wav', 'mp3'];
 
   const zip = new JSZip();
