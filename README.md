@@ -195,7 +195,7 @@ const project = await SBDL.downloadProjectFromURL(`https://projects.example.com/
 
 ### Reading and modifying project.json
 
-Sometimes you may want to access the project's project.json, but you also don't want to decompress an entire zip. You may also want to replace the project.json with something else, for example compressing.
+Sometimes you may want to read or modify the project's project.json. Decompressing the entire project and recompressing it is slow, so we have some options to let you read or edit the project.json.
 
 These options are only available for sb2 and sb3 projects. For sb projects, these callbacks will silently not be called.
 
@@ -203,6 +203,8 @@ These options are only available for sb2 and sb3 projects. For sb projects, thes
 const options = {
   // Called to allow you to read the project.json and do any analysis you might need to do.
   // You may return a Promise, in which case the downloader will wait for your promise to resolve.
+  // The method will be called before overwriteJSON, but otherwise it could be called at the
+  // start or end of the download process.
   // type is either 'sb2' or 'sb3'
   // DO NOT modify projectData in-place.
   processJSON: (type, projectData) => {
@@ -210,13 +212,16 @@ const options = {
   },
 
   // Called to allow you to overwrite project.json.
-  // This happens at the very end of the download process. The result returned does not even need to be a
-  // valid Scratch project.json if you don't want it to be. You may return a Promise, in which case the
-  // downloader will wait for your promise to resolve.
+  // This happens at the very end of the download process before compression.
+  // The result returned does not even need to be a valid Scratch project.json if you don't want it to be.
+  // You may return a Promise, in which case the downloader will wait for your promise to resolve.
   // type is either 'sb2' or 'sb3'
   // You MUST return something to use as the project data; modifying it in-place is not enough.
   overwriteJSON: (type, projectData) => {
-    return optimize(projectData);
+    if (type === 'sb3') {
+      return optimize(projectData);
+    }
+    return projectData;
   }
 };
 ```
