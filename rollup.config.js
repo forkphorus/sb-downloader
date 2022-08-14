@@ -1,6 +1,8 @@
 import commonjs from '@rollup/plugin-commonjs';
 import {nodeResolve} from '@rollup/plugin-node-resolve';
 
+const external = ['jszip', 'cross-fetch', '@turbowarp/json'];
+
 export default [
   {
     // For Node.js
@@ -9,7 +11,7 @@ export default [
       file: 'lib/bundle-node.cjs',
       format: 'cjs'
     },
-    external: ['jszip', 'cross-fetch']
+    external
   },
   {
     // For browsers using npm
@@ -18,7 +20,7 @@ export default [
       file: 'lib/bundle-web.cjs',
       format: 'cjs'
     },
-    external: ['jszip', 'cross-fetch']
+    external
   },
   {
     // For browsers using <script>
