@@ -117,7 +117,7 @@ const isProbablyJSON = (uint8array) => uint8array[0] === '{'.charCodeAt(0);
  * @param {InternalProgressTarget} progressTarget
  * @returns {Promise<JSZip>}
  */
-const downloadScratch2 = (projectData, options, progressTarget) => {
+const downloadScratch2 = async (projectData, options, progressTarget) => {
   const IMAGE_EXTENSIONS = ['svg', 'png', 'jpg', 'gif','bmp'];
   const SOUND_EXTENSIONS = ['wav', 'mp3'];
 
@@ -144,18 +144,16 @@ const downloadScratch2 = (projectData, options, progressTarget) => {
     return imageAccumulator++;
   };
 
-  const fetchAndStoreAsset = (md5ext, id) => {
+  const fetchAndStoreAsset = async (md5ext, id) => {
     progressTarget.fetching(md5ext);
     // assetHost will never be undefined here because of parseOptions()
-    return fetchAsArrayBuffer(options.assetHost.replace('$id', md5ext))
-      .then((arrayBuffer) => {
-        const path = `${id}.${getExtension(md5ext)}`;
-        progressTarget.fetched(md5ext);
-        return {
-          path,
-          data: arrayBuffer
-        };
-      });
+    const arrayBuffer = await fetchAsArrayBuffer(options.assetHost.replace('$id', md5ext))
+    const path = `${id}.${getExtension(md5ext)}`;
+    progressTarget.fetched(md5ext);
+    return {
+      path,
+      data: arrayBuffer
+    };
   };
 
   const downloadAssets = (assets) => {
@@ -189,18 +187,17 @@ const downloadScratch2 = (projectData, options, progressTarget) => {
   ];
   const costumes = flat(targets.map((i) => i.costumes || []));
   const sounds = flat(targets.map((i) => i.sounds || []));
-  return downloadAssets([...costumes, ...sounds])
-    .then((filesToAdd) => {
-      // Project JSON is mutated during loading, so add it at the end.
-      zip.file('project.json', processJSON('sb2', projectData, options));
+  const filesToAdd = await downloadAssets([...costumes, ...sounds])
 
-      // Add files to the zip at the end so the order will be consistent.
-      for (const {path, data} of filesToAdd) {
-        zip.file(path, data);
-      }
+  // Project JSON is mutated during loading, so add it at the end.
+  zip.file('project.json', processJSON('sb2', projectData, options));
 
-      return zip;
-    });
+  // Add files to the zip at the end so the order will be consistent.
+  for (const {path, data} of filesToAdd) {
+    zip.file(path, data);
+  }
+
+  return zip;
 };
 
 /**
