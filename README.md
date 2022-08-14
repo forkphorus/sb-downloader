@@ -226,6 +226,17 @@ const options = {
 };
 ```
 
+### Standalone version
+
+The standalone version loaded via `<script>` tag also re-exports some internal libraries so that you don't have to add another copy if you want to use them.
+
+```html
+<script src=".../bundle-standalone.min.js"></script>
+<script>
+  var JSZip = SBDL.JSZip;
+</script>
+```
+
 ## Unshared projects
 
 It's possible that unshared projects will no longer be accessible using .sb downloader in the future due to upcoming Scratch API changes. For more information: https://docs.turbowarp.org/unshared-projects

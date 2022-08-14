@@ -24,7 +24,7 @@ export default [
   },
   {
     // For browsers using <script>
-    input: 'src/export-web.js',
+    input: 'src/export-standalone.js',
     output: {
       file: 'lib/bundle-standalone.js',
       format: 'umd',

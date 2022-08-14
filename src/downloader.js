@@ -644,6 +644,3 @@ export const downloadLegacyProjectFromID = async (id, options) => {
   }
   return project;
 };
-
-// Re-export JSZip. This is useful when using the standalone bundling on the website.
-export * as JSZip from 'jszip';
