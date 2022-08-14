@@ -36,21 +36,14 @@ test('sb2 with non-standard JSON', async () => {
       expect(type).toBe('sb2');
       expect(data.variables[0].value).toBe(NaN);
       expect(data.variables[1].value).toBe(Infinity);
-    });
-    const overwriteJSON = vi.fn((type, data) => {
-      expect(type).toBe('sb2');
-      expect(data.variables[0].value).toBe(NaN);
-      expect(data.variables[1].value).toBe(Infinity);
       return {
         something: [Infinity, -Infinity, NaN]
       };
     });
     const project = await SBDL.downloadProjectFromBuffer(fs.readFileSync(fixture), {
-      processJSON,
-      overwriteJSON
+      processJSON
     });
     expect(processJSON).toHaveBeenCalledOnce();
-    expect(overwriteJSON).toHaveBeenCalledOnce();
     const zip = await JSZip.loadAsync(project.arrayBuffer);
     expect(await zip.file('project.json').async('text')).toBe('{"something":[Infinity,-Infinity,NaN]}');
   }

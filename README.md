@@ -196,30 +196,19 @@ const project = await SBDL.downloadProjectFromURL(`https://projects.example.com/
 
 ### Reading and modifying project.json
 
-Sometimes you may want to read or modify the project's project.json. Decompressing the entire project and recompressing it is slow, so we have some options to let you read or edit the project.json.
-
-These options are only available for sb2 and sb3 projects. For sb projects, these callbacks will silently not be called.
+Sometimes you may want to read or modify the project's project.json. Decompressing the entire project and recompressing it is slow, so we have an option for this purpose. This option is only available for sb2 and sb3 projects. For sb projects, it silently won't be called.
 
 ```js
 const options = {
-  // Called to allow you to read the project.json and do any analysis you might need to do.
+  // Allows you to read or overwrite project.json.
   // You may return a Promise, in which case the downloader will wait for your promise to resolve.
-  // The method will be called before overwriteJSON, but otherwise it could be called at the
-  // start or end of the download process.
+  // This will be called at the end of the download.
+  // If this callback returns an object, this object will replace the project's project.json.
+  // This object doesn't need to be a real Scratch project if you don't want it to be one.
   // type is either 'sb2' or 'sb3'
-  // DO NOT modify projectData in-place.
+  // Modifiying projectData in-place will not function properly.
   processJSON: (type, projectData) => {
     console.log(type, projectData);
-  },
-
-  // Called to allow you to overwrite project.json.
-  // This happens at the very end of the download process before compression.
-  // The result returned does not even need to be a valid Scratch project.json if you don't want it to be.
-  // You may return a Promise, in which case the downloader will wait for your promise to resolve.
-  // type is either 'sb2' or 'sb3'
-  // Modifying projectData is NOT enough. You MUST return an object.
-  // If no value is returned, the original data will be left as-is.
-  overwriteJSON: (type, projectData) => {
     if (type === 'sb3') {
       return optimize(projectData);
     }

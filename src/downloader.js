@@ -25,7 +25,6 @@ import environment from './environment.js';
  * @property {AbortSignal} [signal] An AbortSignal that can be used to cancel the download.
  * @property {string} [assetHost] The URL from which to download assets from. $id is replaced with the asset ID (md5ext).
  * @property {(type: ProjectType, data: Readonly<unknown>) => void | Promise<void>} [processJSON] Called during the download to allow readonly access to the project.json
- * @property {(type: ProjectType, data: unknown) => unknown | Promise<unknown>} [overwriteJSON] Called at the end of the download to allow replacing the project.json with something else
  */
 
 /**
@@ -61,11 +60,7 @@ const throwIfAborted = (options) => {
  */
 const processJSON = async (type, data, options) => {
   if (options.processJSON) {
-    await options.processJSON(type, data);
-    throwIfAborted(options);
-  }
-  if (options.overwriteJSON) {
-    const newData = await options.overwriteJSON(type, data);
+    const newData = await options.processJSON(type, data);
     if (newData) {
       data = newData;
     }
@@ -456,15 +451,10 @@ export const downloadProjectFromBuffer = async (data, options) => {
 
   throwIfAborted(options);
 
-  if (options.processJSON) {
-    await options.processJSON(type, projectData);
-    throwIfAborted(options);
-  }
-
   let needToReZip = !!options.date;
 
-  if (options.overwriteJSON) {
-    const newJSON = await options.overwriteJSON(type, projectData);
+  if (options.processJSON) {
+    const newJSON = await options.processJSON(type, projectData);
     if (newJSON) {
       needToReZip = true;
       zip.file(projectDataFile.name, ExtendedJSON.stringify(newJSON));

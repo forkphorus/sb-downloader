@@ -1,13 +1,5 @@
 // Vitest Snapshot v1
 
-exports[`does not recompress if overwriteJSON returns nothing on compressed sb3 1`] = `
-{
-  "arrayBuffer": ArrayBuffer [SHA-256 73f90aff8695ab18da8736f7a0b5054bed29cb2fc08fe59ab34da7d82c6a74d0],
-  "title": "",
-  "type": "sb3",
-}
-`;
-
 exports[`leaves original project data as-is if overwriteJSON returns nothing on JSON sb3 1`] = `
 {
   "arrayBuffer": ArrayBuffer [SHA-256 36e8b445404a8072426a582dbc689028e49e391d301860ecc1df92ab98dbf527],
@@ -40,7 +32,7 @@ exports[`overwrite compressed sb3 1`] = `
 }
 `;
 
-exports[`process JSON sb2 1`] = `
+exports[`process JSON sb2 without making changes 1`] = `
 {
   "arrayBuffer": ArrayBuffer [SHA-256 3caf88a05d2a18a9eabc9d8db90b1c8282a12916cab141b70d821d03eda3eb5d],
   "title": "",
@@ -48,7 +40,7 @@ exports[`process JSON sb2 1`] = `
 }
 `;
 
-exports[`process JSON sb3 1`] = `
+exports[`process JSON sb3 without making changes 1`] = `
 {
   "arrayBuffer": ArrayBuffer [SHA-256 36e8b445404a8072426a582dbc689028e49e391d301860ecc1df92ab98dbf527],
   "title": "",
@@ -64,7 +56,7 @@ exports[`process and overwrite compressed sb3 with JSON in subdirectory 1`] = `
 }
 `;
 
-exports[`process compressed sb2 1`] = `
+exports[`process compressed sb2 without making changes 1`] = `
 {
   "arrayBuffer": ArrayBuffer [SHA-256 e1a56dfffa77e29c50166c1e2d1fc05af1dec3a156dc8602c9aa06da098dd546],
   "title": "",
@@ -72,17 +64,17 @@ exports[`process compressed sb2 1`] = `
 }
 `;
 
-exports[`process compressed sb3 1`] = `
+exports[`process compressed sb3 with JSON in subdirectory without making changes 1`] = `
 {
-  "arrayBuffer": ArrayBuffer [SHA-256 73f90aff8695ab18da8736f7a0b5054bed29cb2fc08fe59ab34da7d82c6a74d0],
+  "arrayBuffer": ArrayBuffer [SHA-256 52fa4c6fcffc48214861e5ad8f37f79b2a11e567d28674e10dd32f7e4bc5af2c],
   "title": "",
   "type": "sb3",
 }
 `;
 
-exports[`process compressed sb3 with JSON in subdirectory 1`] = `
+exports[`process compressed sb3 without making changes 1`] = `
 {
-  "arrayBuffer": ArrayBuffer [SHA-256 52fa4c6fcffc48214861e5ad8f37f79b2a11e567d28674e10dd32f7e4bc5af2c],
+  "arrayBuffer": ArrayBuffer [SHA-256 73f90aff8695ab18da8736f7a0b5054bed29cb2fc08fe59ab34da7d82c6a74d0],
   "title": "",
   "type": "sb3",
 }
