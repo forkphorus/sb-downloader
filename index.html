@@ -664,9 +664,9 @@
           let errorMessage = '❌ ';
           if (e && e.name === 'CanNotAccessProjectError') {
             if (legacy) {
-              errorMessage += 'The project does not exist or it was made after January 2, 2019 so no legacy version is available.'
+              errorMessage += 'The project does not exist, the ID is invalid, your network blocks turbowarp.org, or the project was made after January 2, 2019 so no legacy version is available.';
             } else {
-              errorMessage += 'The project does not exist or the ID is invalid.'
+              errorMessage += 'The project does not exist, the ID is invalid, or your network blocks turbowarp.org.';
             }
           } else {
             errorMessage += e;
