@@ -23,7 +23,7 @@ test('get metadata for shared project', async () => {
   expect(metadata.title).toBe('Bouncing');
   expect(metadata.id).toBe(437419376);
   expect(metadata.author.username).toBe('TestMuffin');
-  expect(metadata.project_token).toMatch(/^\d+_[a-f0-9]{40}$/i);
+  expect(metadata.project_token).toBeTypeOf('string');
 }, 30000);
 
 test('get metadata for unshared project', async () => {
