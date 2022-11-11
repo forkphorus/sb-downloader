@@ -590,29 +590,25 @@ export const downloadProjectFromURL = async (url, options) => {
 
 /**
  * @param {string} id
- * @param {Options} [options]
+ * @param {string} baseUrl
+ * @param {Options} options
  * @returns {Promise<DownloadedProject>}
  */
-export const downloadProjectFromID = async (id, options) => {
+const downloadFromScratchURLWithToken = async (id, baseUrl, options) => {
   options = parseOptions(options);
   if (options.onProgress) {
     options.onProgress('metadata', 0, 1);
   }
-  let meta;
-  try {
-    meta = await getProjectMetadata(id, options);
-  } catch (e) {
-    // This is okay for now.
-  }
+  const meta = await getProjectMetadata(id, options);
   if (options.onProgress) {
     options.onProgress('metadata', 1, 1);
   }
   throwIfAborted(options);
-  const token = meta && meta.project_token;
-  const title = meta && meta.title;
+  const token = meta.project_token;
+  const title = meta.title;
   const tokenPart = token ? `?token=${token}` : '';
-  const url = `https://projects.scratch.mit.edu/${id}${tokenPart}`;
-  const project = await downloadProjectFromURL(url, options);
+  const fullUrl = baseUrl + tokenPart;
+  const project = await downloadProjectFromURL(fullUrl, options);
   if (title) {
     project.title = title;
   }
@@ -624,19 +620,19 @@ export const downloadProjectFromID = async (id, options) => {
  * @param {Options} [options]
  * @returns {Promise<DownloadedProject>}
  */
-export const downloadLegacyProjectFromID = async (id, options) => {
-  options = parseOptions(options);
-  // Legacy API probably doesn't require token, so we can fetch the metadata in parallel with the project download.
-  const url = `https://projects.scratch.mit.edu/internalapi/project/${id}/get/`;
-  const [meta, project] = await Promise.all([
-    getProjectMetadata(id, options).catch((error) => {
-      // Ignore error
-      return null;
-    }),
-    downloadProjectFromURL(url, options),
-  ]);
-  if (meta && meta.title) {
-    project.title = meta.title;
-  }
-  return project;
-};
+export const downloadProjectFromID = (id, options) => downloadFromScratchURLWithToken(
+  id,
+  `https://projects.scratch.mit.edu/${id}`,
+  options
+);
+
+/**
+ * @param {string} id
+ * @param {Options} [options]
+ * @returns {Promise<DownloadedProject>}
+ */
+export const downloadLegacyProjectFromID = (id, options) => downloadFromScratchURLWithToken(
+  id,
+  `https://projects.scratch.mit.edu/internalapi/project/${id}/get`,
+  options
+);
