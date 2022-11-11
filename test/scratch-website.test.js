@@ -13,11 +13,6 @@ test('get legacy from ID', async () => {
   expect(project.title).toBe('Insertion Sort');
 }, 30000);
 
-test('download unshared project', async () => {
-  // NOTE: This test is expected to eventually break when Scratch finishes their API changes
-  await SBDL.downloadProjectFromID('721028192');
-}, 30000);
-
 test('get metadata for shared project', async () => {
   const metadata = await SBDL.getProjectMetadata('437419376');
   expect(metadata.title).toBe('Bouncing');
