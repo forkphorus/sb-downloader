@@ -233,7 +233,7 @@ The standalone version loaded via `<script>` tag also re-exports some internal l
 
 ## Unshared projects
 
-It's possible that unshared projects will no longer be accessible using .sb downloader in the future due to upcoming Scratch API changes. For more information: https://docs.turbowarp.org/unshared-projects
+Unshared projects are no longer accessible due to Scratch API changes. More information: https://docs.turbowarp.org/unshared-projects
 
 ## Privacy
 
