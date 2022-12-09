@@ -135,9 +135,9 @@ const options = {
 
 ### Aborting
 
-In browsers, you can also abort the download after starting it. Note that while we try to stop ongoing and future network activity, some activity may continue for a brief period depending on what step the download process was on. Regardless, the Promise returned by download* should eventually reject if abort is called before it resolves.
+You can also abort the download after starting it. Note that while we try to stop ongoing and future network activity, some activity may continue for a brief period depending on what step the download process was on. Regardless, the Promise returned by download* should eventually reject if abort is called before it resolves.
 
-Requires separate AbortController polyfill in Node.js version older than v15 and some older browsers.
+Requires separate AbortController polyfill in Node.js versions older than v15 and some older browsers.
 
 ```js
 const abortController = new AbortController();
@@ -189,24 +189,24 @@ const options = {
 };
 
 // Use downloadProjectFromURL or fetch the project's JSON yourself and use downloadProjectFromBuffer.
-// The URL to use will vary for each mod. You can usually examine network requests using.
+// The URL to use will vary for each mod. You can usually examine network requests using
 // your browser's developer tools to find this.
 const project = await SBDL.downloadProjectFromURL(`https://projects.example.com/${id}`);
 ```
 
 ### Reading and modifying project.json
 
-Sometimes you may want to read or modify the project's project.json. Decompressing the entire project and recompressing it is slow, so we have an option for this purpose. This option is only available for sb2 and sb3 projects. For sb projects, it silently won't be called.
+Sometimes you may want to read or modify the project's project.json. Decompressing the entire project and recompressing it is slow and error-prone, so we have an option for this purpose. This option is only available for sb2 and sb3 projects. For sb projects, it silently won't be called.
 
 ```js
 const options = {
   // Allows you to read or overwrite project.json.
-  // You may return a Promise, in which case the downloader will wait for your promise to resolve.
   // This will be called at the end of the download.
-  // If this callback returns an object, this object will replace the project's project.json.
-  // This object doesn't need to be a real Scratch project if you don't want it to be one.
+  // If this callback returns an object, the object will replace the project's project.json.
+  // You may return a Promise, in which case the downloader will wait for your promise to resolve.
   // type is either 'sb2' or 'sb3'
-  // Modifiying projectData in-place will not function properly.
+  // Modifiying projectData in-place will not function properly. You must return an object.
+  // If you modify projectData in-place then make sure to return projectData; at the end.
   processJSON: (type, projectData) => {
     console.log(type, projectData);
     if (type === 'sb3') {
@@ -218,7 +218,7 @@ const options = {
 
 ### Standalone version
 
-The standalone version loaded via `<script>` tag also re-exports some internal libraries so that you don't have to add another copy if you want to use them.
+The standalone version loaded via `<script>` tag also re-exports some internal libraries so that you don't have to add another copy.
 
 ```html
 <script src="https://.../bundle-standalone.min.js"></script>
@@ -237,6 +237,6 @@ Unshared projects are no longer accessible due to Scratch API changes. More info
 
 ## Privacy
 
-In Node.js, .sb downloader will only talk directly to the Scratch API: api.scratch.mit.edu, projects.scratch.mit.edu, and assets.scratch.mit.edu.
+In Node.js, by default .sb downloader will only talk directly to the Scratch API: api.scratch.mit.edu, projects.scratch.mit.edu, and assets.scratch.mit.edu.
 
 In browsers, in order to access the project token and title, .sb downloader may send the project ID to a server under our control (trampoline.turbowarp.org or trampoline.turbowarp.xyz) as it can't directly access certain Scratch APIs. The ID may be recorded for up to 24 hours for caching purposes only.
