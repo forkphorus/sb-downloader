@@ -22,7 +22,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "prepublish": "rollup -c && tsc",
+    "prepublishOnly": "rollup -c && tsc",
     "test": "vitest run"
   },
   "bin": {
