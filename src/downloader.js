@@ -522,8 +522,8 @@ export const getProjectMetadata = async (id, options) => {
       `https://api.scratch.mit.edu/projects/${id}`
     ] :
     [
-      `https://trampoline.turbowarp.org/proxy/projects/${id}`,
-      `https://trampoline.turbowarp.xyz/proxy/projects/${id}`,
+      `https://trampoline.turbowarp.org/api/projects/${id}`,
+      `https://trampoline.turbowarp.xyz/api/projects/${id}`,
     ]
   );
   let firstError = null;
