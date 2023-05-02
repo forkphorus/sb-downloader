@@ -18,7 +18,7 @@ jobs:
       run: npm ci
     - name: Build website
       run: npm run build
-    - name: Build package
-      run: npm run prepublish
+    - name: Build npm package
+      run: npm run prepublishOnly
     - name: Test
       run: npm test
