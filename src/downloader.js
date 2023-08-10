@@ -38,8 +38,8 @@ import environment from './environment.js';
  * @returns {Options}
  */
 const parseOptions = (givenOptions) => Object.assign({
-  // Default asset host for scratch.mit.edu
-  assetHost: 'https://assets.scratch.mit.edu/internalapi/asset/$id/get/'
+  // Default asset host for Scratch
+  assetHost: 'https://scratch-assets.scratch.org/internalapi/asset/$id/get/'
 }, givenOptions || {});
 
 /**
