@@ -238,7 +238,7 @@ const downloadScratch3 = async (projectData, options, progressTarget) => {
 
     for (const data of assets) {
       // Make sure md5ext always exists.
-      // See the "Cake" costume of https://projects.scratch.mit.edu/630358355 for an example.
+      // See the "Cake" costume of https://scratch.org/projects/630358355 for an example.
       // https://github.com/forkphorus/forkphorus/issues/504
       if (!data.md5ext) {
         data.md5ext = `${data.assetId}.${data.dataFormat}`;
@@ -246,7 +246,7 @@ const downloadScratch3 = async (projectData, options, progressTarget) => {
 
       // Deduplicate assets so we don't make unnecessary requests later.
       // Use md5ext instead of assetId because there are a few projects that have assets with the same
-      // assetId but different md5ext. (eg. https://scratch.mit.edu/projects/531881458)
+      // assetId but different md5ext. (eg. https://scratch.org/projects/531881458)
       const md5ext = data.md5ext;
       if (knownIds.has(md5ext)) {
         continue;

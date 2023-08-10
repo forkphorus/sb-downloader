@@ -33,7 +33,7 @@ Use project IDs, project URLs, or other URLs to download projects. If multiple p
 
 ```bash
 sbdl 60917032
-sbdl https://scratch.mit.edu/projects/60917032/
+sbdl https://scratch.org/projects/60917032/
 sbdl https://packager.turbowarp.org/example.sb3
 ```
 
@@ -96,7 +96,7 @@ const options = {
 const project = await SBDL.downloadProjectFromID('60917032', options);
 const project = await SBDL.downloadLegacyProjectFromID('60917032', options);
 // If you have a direct URL to download the project.json or compressed project:
-// The URL MUST be a direct URL. Links like https://scratch.mit.edu/projects/104 will NOT work.
+// The URL MUST be a direct download. Links like https://scratch.org/projects/104 will NOT work.
 const project = await SBDL.downloadProjectFromURL('https://packager.turbowarp.org/example.sb3', options);
 // If you already downloaded the project.json or compressed project:
 const project = await SBDL.downloadProjectFromJSON(fs.readFileSync('project.json', 'utf-8'), options);
