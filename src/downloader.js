@@ -38,8 +38,8 @@ import environment from './environment.js';
  * @returns {Options}
  */
 const parseOptions = (givenOptions) => Object.assign({
-  // Default asset host for scratch.mit.edu
-  assetHost: 'https://assets.scratch.mit.edu/internalapi/asset/$id/get/'
+  // Default asset host for Scratch
+  assetHost: 'https://scratch-assets.scratch.org/internalapi/asset/$id/get/'
 }, givenOptions || {});
 
 /**
@@ -238,7 +238,7 @@ const downloadScratch3 = async (projectData, options, progressTarget) => {
 
     for (const data of assets) {
       // Make sure md5ext always exists.
-      // See the "Cake" costume of https://projects.scratch.mit.edu/630358355 for an example.
+      // See the "Cake" costume of https://scratch.org/projects/630358355 for an example.
       // https://github.com/forkphorus/forkphorus/issues/504
       if (!data.md5ext) {
         data.md5ext = `${data.assetId}.${data.dataFormat}`;
@@ -246,7 +246,7 @@ const downloadScratch3 = async (projectData, options, progressTarget) => {
 
       // Deduplicate assets so we don't make unnecessary requests later.
       // Use md5ext instead of assetId because there are a few projects that have assets with the same
-      // assetId but different md5ext. (eg. https://scratch.mit.edu/projects/531881458)
+      // assetId but different md5ext. (eg. https://scratch.org/projects/531881458)
       const md5ext = data.md5ext;
       if (knownIds.has(md5ext)) {
         continue;
@@ -519,7 +519,7 @@ export const getProjectMetadata = async (id, options) => {
   const urls = (
     environment.canAccessScratchAPI ?
     [
-      `https://api.scratch.mit.edu/projects/${id}`
+      `https://scratch-api.scratch.org/projects/${id}`
     ] :
     [
       `https://trampoline.turbowarp.org/api/projects/${id}`,
@@ -622,7 +622,7 @@ const downloadFromScratchURLWithToken = async (id, baseUrl, options) => {
  */
 export const downloadProjectFromID = (id, options) => downloadFromScratchURLWithToken(
   id,
-  `https://projects.scratch.mit.edu/${id}`,
+  `https://scratch-projects.scratch.org/${id}`,
   options
 );
 
@@ -633,6 +633,6 @@ export const downloadProjectFromID = (id, options) => downloadFromScratchURLWith
  */
 export const downloadLegacyProjectFromID = (id, options) => downloadFromScratchURLWithToken(
   id,
-  `https://projects.scratch.mit.edu/internalapi/project/${id}/get`,
+  `https://scratch-projects.scratch.org/internalapi/project/${id}/get`,
   options
 );

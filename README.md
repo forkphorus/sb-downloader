@@ -33,7 +33,7 @@ Use project IDs, project URLs, or other URLs to download projects. If multiple p
 
 ```bash
 sbdl 60917032
-sbdl https://scratch.mit.edu/projects/60917032/
+sbdl https://scratch.org/projects/60917032/
 sbdl https://packager.turbowarp.org/example.sb3
 ```
 
@@ -96,7 +96,7 @@ const options = {
 const project = await SBDL.downloadProjectFromID('60917032', options);
 const project = await SBDL.downloadLegacyProjectFromID('60917032', options);
 // If you have a direct URL to download the project.json or compressed project:
-// The URL MUST be a direct URL. Links like https://scratch.mit.edu/projects/104 will NOT work.
+// The URL MUST be a direct download. Links like https://scratch.org/projects/104 will NOT work.
 const project = await SBDL.downloadProjectFromURL('https://packager.turbowarp.org/example.sb3', options);
 // If you already downloaded the project.json or compressed project:
 const project = await SBDL.downloadProjectFromJSON(fs.readFileSync('project.json', 'utf-8'), options);
@@ -169,8 +169,8 @@ If you absolutely need to cancel all activity immediately, you can run the downl
 ### Fetching metadata
 
 ```js
-// This method fetches the project's metadata from https://api.scratch.mit.edu/projects/id
-// Example data: https://api.scratch.mit.edu/projects/104
+// This method fetches the project's metadata from https://scratch-api.scratch.org/projects/id
+// Example data: https://scratch-api.scratch.org/projects/104
 // Returned promise rejects when the project is unshared.
 // We use this internally for fetching project tokens and titles. We export it in case you find it useful too.
 const metadata = await SBDL.getProjectMetadata('60917032');
@@ -237,6 +237,6 @@ Unshared projects are no longer accessible due to Scratch API changes. More info
 
 ## Privacy
 
-In Node.js, by default .sb downloader will only talk directly to the Scratch API: api.scratch.mit.edu, projects.scratch.mit.edu, and assets.scratch.mit.edu.
+In Node.js, by default .sb downloader will only talk directly to the Scratch API: scratch-api.scratch.org, scratch-projects.scratch.org, and scratch-assets.scratch.org.
 
 In browsers, in order to access the project token and title, .sb downloader may send the project ID to a server under our control (trampoline.turbowarp.org or trampoline.turbowarp.xyz) as it can't directly access certain Scratch APIs. The ID may be recorded for up to 24 hours for caching purposes only.

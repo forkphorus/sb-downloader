@@ -254,12 +254,12 @@
       </noscript>
 
       <p>
-        .sb downloader downloads <a href="https://scratch.mit.edu/">Scratch</a> 1 (sb), Scratch 2 (sb2), or Scratch 3 (sb3) projects.
+        .sb downloader downloads <a href="https://scratch.org/">Scratch</a> 1 (sb), Scratch 2 (sb2), or Scratch 3 (sb3) projects.
         Just paste the project's ID or URL into the input below and press the download button.
       </p>
 
       <div class="project-input-outer">
-        <input class="project-input" value="https://scratch.mit.edu/projects/" spellcheck="false" autocomplete="off">
+        <input class="project-input" value="https://scratch.org/projects/" spellcheck="false" autocomplete="off">
         <script>
           // The script down below will take a bit to load. We have this separate script so the ID's input
           // will have the correct state immediately.
@@ -374,7 +374,7 @@
 
       <h2>Credits</h2>
       <p>
-        .sb downloader is of course powered by the <a href="https://scratch.mit.edu/">Scratch</a> API.
+        .sb downloader is of course powered by the <a href="https://scratch.org/">Scratch</a> API.
         The <a href="https://stuk.github.io/jszip/">JSZip</a> library is used for creating zip archives.
       </p>
 
@@ -427,7 +427,7 @@
       const assetViewerNotSupported = document.querySelector('.asset-viewer-not-supported');
       const assetViewerOuter = document.querySelector('.asset-viewer-outer');
 
-      const SCRATCH_PREFIX = 'https://scratch.mit.edu/projects/';
+      const SCRATCH_PREFIX = 'https://scratch.org/projects/';
       const PROGRESS_STATE_WORKING = 'working';
       const PROGRESS_STATE_DONE = 'done';
       const PROGRESS_STATE_ERROR = 'error';

@@ -12,7 +12,7 @@ Usage: sbdl [options...] <projects...>
 
 Projects can be:
  - A Scratch project ID eg. '60917032'
- - A Scratch project URL eg. 'https://scratch.mit.edu/projects/60917032/'
+ - A Scratch project URL eg. 'https://scratch.org/projects/60917032/'
  - An arbitrary URL eg. 'https://example.com/project.sb3'
 If multiple projects are specified, they will be downloaded sequentially.
 
@@ -37,7 +37,7 @@ const extractProjectID = (string) => {
   if (/^\d+$/.test(string)) {
     return string;
   }
-  let match = string.match(/^https?:\/\/scratch\.mit\.edu\/projects\/(\d+)\/?/);
+  let match = string.match(/^https?:\/\/scratch(?:\.mit\.edu|\.org)\/projects\/(\d+)\/?/);
   if (match) {
     return match[1];
   }
