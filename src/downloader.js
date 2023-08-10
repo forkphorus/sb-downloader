@@ -622,7 +622,7 @@ const downloadFromScratchURLWithToken = async (id, baseUrl, options) => {
  */
 export const downloadProjectFromID = (id, options) => downloadFromScratchURLWithToken(
   id,
-  `https://projects.scratch.mit.edu/${id}`,
+  `https://scratch-projects.scratch.org/${id}`,
   options
 );
 
@@ -633,6 +633,6 @@ export const downloadProjectFromID = (id, options) => downloadFromScratchURLWith
  */
 export const downloadLegacyProjectFromID = (id, options) => downloadFromScratchURLWithToken(
   id,
-  `https://projects.scratch.mit.edu/internalapi/project/${id}/get`,
+  `https://scratch-projects.scratch.org/internalapi/project/${id}/get`,
   options
 );
