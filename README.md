@@ -237,6 +237,6 @@ Unshared projects are no longer accessible due to Scratch API changes. More info
 
 ## Privacy
 
-In Node.js, by default .sb downloader will only talk directly to the Scratch API: api.scratch.mit.edu, projects.scratch.mit.edu, and assets.scratch.mit.edu.
+In Node.js, by default .sb downloader will only talk directly to the Scratch API: scratch-api.scratch.org, scratch-projects.scratch.org, and scratch-assets.scratch.org.
 
 In browsers, in order to access the project token and title, .sb downloader may send the project ID to a server under our control (trampoline.turbowarp.org or trampoline.turbowarp.xyz) as it can't directly access certain Scratch APIs. The ID may be recorded for up to 24 hours for caching purposes only.
