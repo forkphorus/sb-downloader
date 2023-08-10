@@ -519,7 +519,7 @@ export const getProjectMetadata = async (id, options) => {
   const urls = (
     environment.canAccessScratchAPI ?
     [
-      `https://api.scratch.mit.edu/projects/${id}`
+      `https://scratch-api.scratch.org/projects/${id}`
     ] :
     [
       `https://trampoline.turbowarp.org/api/projects/${id}`,

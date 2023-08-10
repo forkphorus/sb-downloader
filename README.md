@@ -169,8 +169,8 @@ If you absolutely need to cancel all activity immediately, you can run the downl
 ### Fetching metadata
 
 ```js
-// This method fetches the project's metadata from https://api.scratch.mit.edu/projects/id
-// Example data: https://api.scratch.mit.edu/projects/104
+// This method fetches the project's metadata from https://scratch-api.scratch.org/projects/id
+// Example data: https://scratch-api.scratch.org/projects/104
 // Returned promise rejects when the project is unshared.
 // We use this internally for fetching project tokens and titles. We export it in case you find it useful too.
 const metadata = await SBDL.getProjectMetadata('60917032');
