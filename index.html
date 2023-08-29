@@ -105,23 +105,14 @@
         border-radius: 4px;
         border-style: solid;
         border-width: 1px;
-      }
-      .download-button:not(:last-child) {
-        margin-bottom: 16px;
+        background: #4C97FF;
+        border-color: #237eff;
       }
       .download-button:hover {
         opacity: 0.9;
       }
       .download-button:active {
         opacity: 0.8;
-      }
-      .download-latest-button {
-        background: #4C97FF;
-        border-color: #237eff;
-      }
-      .download-legacy-button {
-        background-color: #0E9A6C;
-        border-color: #0d7d58;
       }
       .download-icon {
         width: 24px;
@@ -276,14 +267,10 @@
             const initialProjectId = initialUrlParams.get('id');
             // ?type=sb, ?type=sb2, ?type=sb3 is an old parameter
             const initialType = initialUrlParams.get('type');
-            const initialLegacy = initialUrlParams.get('legacy') === 'true';
             if (/^\d+$/.test(initialProjectId)) {
               // We have an initial project ID
               projectInput.value += initialProjectId;
-              const isLegacy = initialLegacy || initialType === 'sb' || initialType === 'sb2';
-              return {
-                isLegacy
-              };
+              return true;
             }
 
             // No initial project ID
@@ -295,17 +282,9 @@
       </div>
 
       <div class="download-buttons">
-        <button class="download-button download-latest-button">
+        <button class="download-button">
           <div class="download-icon"></div>
           <div>Download project</div>
-        </button>
-
-        <button class="download-button download-legacy-button">
-          <div class="download-icon"></div>
-          <div>
-            <div>Download legacy version</div>
-            <div><small>For some old projects. Read below</small></div>
-          </div>
         </button>
       </div>
 
@@ -327,21 +306,14 @@
 
       <div class="downloads-outer"></div>
 
-      <h2>Legacy version of projects</h2>
-      <p>
-        The "legacy version" of a project is the last version of the project before it was modified with Scratch 3.
-        This is usually only available for projects created before January 2, 2019.
-      </p>
-      <p>
-        When Scratch 3 was released, existing projects weren't converted to sb3 files, but re-saving a project will always convert it to an sb3.
-        Sometimes this causes issues because the conversion process isn't perfect, which is when downloading the legacy version can be useful.
-      </p>
-
       <h2>Unshared projects</h2>
       <p>
         Unshared projects are no longer accessible using this tool due to Scratch API changes.
         <a href="https://docs.turbowarp.org/unshared-projects">More information</a>.
       </p>
+
+      <h2>Legacy version no longer available</h2>
+      <p>In August 2023, Scratch disabled the API to download the legacy version of projects.</p>
 
       <h2>Asset viewer</h2>
       <p class="asset-viewer-placeholder">
@@ -387,7 +359,7 @@
 
     <script type="module">
       import JSZip from 'jszip';
-      import {downloadProjectFromID, downloadLegacyProjectFromID} from './src/export-web.js';
+      import {downloadProjectFromID} from './src/export-web.js';
 
       /**
        * @param {string} text
@@ -415,8 +387,7 @@
       };
 
       const projectInput = document.querySelector('.project-input');
-      const downloadLatestButton = document.querySelector('.download-latest-button');
-      const downloadLegacyButton = document.querySelector('.download-legacy-button');
+      const downloadLatestButton = document.querySelector('.download-button');
       const progressOuter = document.querySelector('.progress-outer');
       const progressFill = document.querySelector('.progress-fill');
       const progressText = document.querySelector('.progress-text');
@@ -458,9 +429,6 @@
       });
       downloadLatestButton.addEventListener('click', () => {
         downloadProject(false);
-      });
-      downloadLegacyButton.addEventListener('click', () => {
-        downloadProject(true);
       });
 
       const showAssetViewer = async (project) => {
@@ -578,7 +546,7 @@
         }
       };
 
-      const downloadProject = async (legacy) => {
+      const downloadProject = async () => {
         const projectId = extractProjectId(projectInput.value);
         if (!projectId) {
           alert('Paste a project ID or URL into the input above first.');
@@ -592,11 +560,6 @@
 
           const urlParams = new URLSearchParams();
           urlParams.set('id', projectId);
-          if (legacy) {
-            urlParams.set('legacy', 'true');
-          } else {
-            urlParams.delete('legacy');
-          }
           replaceParameters(urlParams);
 
           mostRecentProject = null;
@@ -627,8 +590,7 @@
             signal: localAbortController.signal
           };
 
-          const downloadFunction = legacy ? downloadLegacyProjectFromID : downloadProjectFromID;
-          const project = await downloadFunction(projectId, options);
+          const project = await downloadProjectFromID(projectId, options);
           mostRecentProject = project;
 
           const title = project.title ? `${project.title} (${projectId})` : projectId;
@@ -664,11 +626,7 @@
 
           let errorMessage = '❌ ';
           if (e && e.name === 'CanNotAccessProjectError') {
-            if (legacy) {
-              errorMessage += 'The project does not exist, the ID is invalid, your network blocks turbowarp.org, or the project was made after January 2, 2019 so no legacy version is available.';
-            } else {
-              errorMessage += 'The project does not exist, the ID is invalid, or your network blocks turbowarp.org.';
-            }
+            errorMessage += 'The project does not exist, the ID is invalid, or your network blocks turbowarp.org.';
           } else {
             errorMessage += e;
           }
@@ -677,8 +635,7 @@
       };
 
       if (window.InitialState) {
-        const isLegacy = window.InitialState.isLegacy;
-        downloadProject(isLegacy);
+        downloadProject();
       }
     </script>
   </body>
