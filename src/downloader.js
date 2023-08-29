@@ -625,14 +625,3 @@ export const downloadProjectFromID = (id, options) => downloadFromScratchURLWith
   `https://projects.scratch.mit.edu/${id}`,
   options
 );
-
-/**
- * @param {string} id
- * @param {Options} [options]
- * @returns {Promise<DownloadedProject>}
- */
-export const downloadLegacyProjectFromID = (id, options) => downloadFromScratchURLWithToken(
-  id,
-  `https://projects.scratch.mit.edu/internalapi/project/${id}/get`,
-  options
-);

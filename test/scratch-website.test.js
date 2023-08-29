@@ -7,12 +7,6 @@ test('get latest from ID', async () => {
   expect(project.title).toBe('Insertion Sort');
 }, 30000);
 
-test('get legacy from ID', async () => {
-  const project = await SBDL.downloadLegacyProjectFromID('140947879');
-  expect(project.type).toBe('sb2');
-  expect(project.title).toBe('Insertion Sort');
-}, 30000);
-
 test('get metadata for shared project', async () => {
   const metadata = await SBDL.getProjectMetadata('437419376');
   expect(metadata.title).toBe('Bouncing');
