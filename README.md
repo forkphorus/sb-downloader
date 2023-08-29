@@ -37,11 +37,6 @@ sbdl https://scratch.mit.edu/projects/60917032/
 sbdl https://packager.turbowarp.org/example.sb3
 ```
 
-To download the legacy version of Scratch project IDs or URLs, put --legacy anywhere
-```bash
-sbdl --legacy 60917032
-```
-
 ## API
 
 You can install .sb downloader from npm:
@@ -94,7 +89,6 @@ const options = {
 // They all return the same type of object documented further below.
 // If you have a Scratch project ID:
 const project = await SBDL.downloadProjectFromID('60917032', options);
-const project = await SBDL.downloadLegacyProjectFromID('60917032', options);
 // If you have a direct URL to download the project.json or compressed project:
 // The URL MUST be a direct URL. Links like https://scratch.mit.edu/projects/104 will NOT work.
 const project = await SBDL.downloadProjectFromURL('https://packager.turbowarp.org/example.sb3', options);
