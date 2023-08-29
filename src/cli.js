@@ -18,8 +18,6 @@ If multiple projects are specified, they will be downloaded sequentially.
 
 Options:
  --help     Shows this screen
- --legacy   For Scratch project IDs or URLs, downloads the legacy version
-            of the project instead of the latest version.
 
 Projects will be saved in the current working directory with a file name
 based on the detected title of the project.
@@ -92,8 +90,6 @@ const run = async () => {
     return;
   }
 
-  const isLegacy = options.includes('--legacy');
-
   for (const project of projects) {
     const onProgress = (type, loaded, total) => {
       let progress = loaded / total;
@@ -120,13 +116,8 @@ const run = async () => {
 
     let downloadedProject;
     if (id) {
-      if (isLegacy) {
-        console.log(`Downloading legacy project from ID: ${id}`);
-        downloadedProject = await SBDL.downloadLegacyProjectFromID(id, options);
-      } else {
-        console.log(`Downloading project from ID: ${id}`);
-        downloadedProject = await SBDL.downloadProjectFromID(id, options);
-      }
+      console.log(`Downloading project from ID: ${id}`);
+      downloadedProject = await SBDL.downloadProjectFromID(id, options);
     } else if (isURL(project)) {
       console.log(`Downloading project from URL: ${project}`);
       downloadedProject = await SBDL.downloadProjectFromURL(project, options);
