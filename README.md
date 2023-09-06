@@ -2,7 +2,9 @@
 
 https://forkphorus.github.io/sb-downloader/
 
-A downloader for Scratch 1, Scratch 2, or Scratch 3 projects.
+Website, JavaScript library, and CLI to download projects from Scratch. Supports Scratch 1 (sb), Scratch 2 (sb2), and Scratch 3 (sb3).
+
+Used by the [TurboWarp Packager](https://packager.turbowarp.org/), [forkphorus packager](https://forkphorus.github.io/packager/), and [others](https://github.com/forkphorus/sb-downloader/network/dependents).
 
 ## Development
 
@@ -23,7 +25,7 @@ npm run preview
 
 We have a simple CLI. It's primarily intended to be a simple example of how to use the API, but may be useful on its own anyways. Probably requires Node version 14 or later.
 
-Install from npm:
+Install it from npm:
 
 ```bash
 npm install --global @turbowarp/sbdl
@@ -39,9 +41,11 @@ sbdl https://packager.turbowarp.org/example.sb3
 
 ## API
 
-You can install .sb downloader from npm:
+Our JavaScript API works in Node.js and in browsers.
 
-```
+You can install it from npm:
+
+```bash
 npm install @turbowarp/sbdl
 ```
 
@@ -51,10 +55,10 @@ import * as SBDL from '@turbowarp/sbdl';
 const SBDL = require('@turbowarp/sbdl');
 ```
 
-If you just want to run it in a website and can't use a package manager, you can use a `<script>` tag. Please make sure to update the version to the latest on https://github.com/forkphorus/sb-downloader/releases; sometimes we forget to update the version number here.
+If you just want to run it in a website and don't want to use a full package manager, you can instead use the standalone version using a simple `<script>` tag. Please make sure to replace the version number in the snippet below with the latest version from https://github.com/forkphorus/sb-downloader/releases; sometimes we forget to update it.
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@turbowarp/sbdl@2.3.3/lib/bundle-standalone.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turbowarp/sbdl@3.0.0/lib/bundle-standalone.min.js"></script>
 <script>
   // .sb downloader is exported as `SBDL` on window
   // See the "Standalone version" below for more information specifically about the standalone version
@@ -129,9 +133,9 @@ const options = {
 
 ### Aborting
 
-You can also abort the download after starting it. Note that while we try to stop ongoing and future network activity, some activity may continue for a brief period depending on what step the download process was on. Regardless, the Promise returned by download* should eventually reject if abort is called before it resolves.
+You can also abort the download after starting it. Note that while we try to stop ongoing and future network activity, some activity may continue for a brief period depending on what step the download process was on. Regardless, the Promise returned by download*() should eventually reject if abort is called before it resolves.
 
-Requires separate AbortController polyfill in Node.js versions older than v15 and some older browsers.
+Aborting requires an AbortController polyfill in Node.js versions older than v15 and some older browsers. You must provide this on your own if you need it.
 
 ```js
 const abortController = new AbortController();
@@ -190,7 +194,7 @@ const project = await SBDL.downloadProjectFromURL(`https://projects.example.com/
 
 ### Reading and modifying project.json
 
-Sometimes you may want to read or modify the project's project.json. Decompressing the entire project and recompressing it is slow and error-prone, so we have an option for this purpose. This option is only available for sb2 and sb3 projects. For sb projects, it silently won't be called.
+Sometimes you may want to read or modify the project's project.json. Decompressing the entire project and recompressing it is slow and error-prone, so we have an option for this purpose. This option only works for sb2 and sb3 projects. For sb projects, it silently won't be called as there is no project.json.
 
 ```js
 const options = {
@@ -204,7 +208,7 @@ const options = {
   processJSON: (type, projectData) => {
     console.log(type, projectData);
     if (type === 'sb3') {
-      return optimize(projectData);
+      return doSomething(projectData);
     }
   }
 };
@@ -228,6 +232,10 @@ The standalone version loaded via `<script>` tag also re-exports some internal l
 ## Unshared projects
 
 Unshared projects are no longer accessible due to Scratch API changes. More information: https://docs.turbowarp.org/unshared-projects
+
+## Legacy version of projects
+
+Previous versions of .sb downloader allowed you to download "legacy" versions of projects, but Scratch disabled this API in August 2023.
 
 ## Privacy
 
