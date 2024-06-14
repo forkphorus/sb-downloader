@@ -72,7 +72,7 @@ Browsers with full support:
  - Firefox >= 57
  - Edge >= 79
 
-The primary limiting factors are support for AbortController (optional for cancelling downloads) and TextDecoder (for determining the type of pre-compressed projects). You may be able to polyfill these on your own.
+The primary limiting factors are support for fetch, TextDecoder, and AbortController (optional). You may be able to polyfill these on your own.
 
 ### Simple usage
 
@@ -91,12 +91,16 @@ const options = {
 
 // Download using any of these methods. These return a Promise that eventually resolves or rejects.
 // They all return the same type of object documented further below.
+
 // If you have a Scratch project ID:
+// (SBDL will get a project token for you so you don't need to worry)
 const project = await SBDL.downloadProjectFromID('60917032', options);
+
 // If you have a direct URL to download the project.json or compressed project:
-// The URL MUST be a direct URL. Links like https://scratch.mit.edu/projects/104 will NOT work.
+// Non-direct links such as https://scratch.mit.edu/projects/104 won't work (use downloadProjectFromID instead)
 const project = await SBDL.downloadProjectFromURL('https://packager.turbowarp.org/example.sb3', options);
-// If you already downloaded the project.json or compressed project:
+
+// If you already downloaded the project.json or compressed project and need the rest of the assets:
 const project = await SBDL.downloadProjectFromJSON(fs.readFileSync('project.json', 'utf-8'), options);
 const project = await SBDL.downloadProjectFromBuffer(fs.readFileSync('project.json'), options);
 
