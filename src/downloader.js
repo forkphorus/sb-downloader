@@ -28,12 +28,6 @@ import environment from './environment.js';
  */
 
 /**
- * @typedef InternalProgressTarget
- * @property {(md5ext: string) => void} fetching
- * @property {(md5ext: string) => void} fetched
- */
-
-/**
  * @param {Options} givenOptions
  * @returns {Options}
  */
@@ -50,6 +44,40 @@ const throwIfAborted = (options) => {
   if (options.signal && options.signal.aborted) {
     throw new AbortError();
   }
+};
+
+/**
+ * @param {Options} options
+ */
+const makeProgressTarget = (options) => {
+  let totalAssets = 0;
+  let loadedAssets = 0;
+  let timeout = null;
+
+  const emitProgressUpdate = () => {
+    throwIfAborted(options);
+
+    if (!timeout) {
+      timeout = setTimeout(() => {
+        throwIfAborted(options);
+        timeout = null;
+        if (options.onProgress) {
+          options.onProgress('assets', loadedAssets, totalAssets);
+        }
+      });
+    }
+  };
+
+  return {
+    fetching: () => {
+      totalAssets++;
+      emitProgressUpdate();
+    },
+    fetched: () => {
+      loadedAssets++;
+      emitProgressUpdate();
+    }
+  };
 };
 
 /**
@@ -113,13 +141,13 @@ const isProbablyJSON = (uint8array) => uint8array[0] === '{'.charCodeAt(0);
 /**
  * @param {unknown} projectData
  * @param {Options} options
- * @param {InternalProgressTarget} progressTarget
  * @returns {Promise<JSZip>}
  */
-const downloadScratch2 = async (projectData, options, progressTarget) => {
+const downloadScratch2 = async (projectData, options) => {
   const IMAGE_EXTENSIONS = ['svg', 'png', 'jpg', 'gif','bmp'];
   const SOUND_EXTENSIONS = ['wav', 'mp3'];
 
+  const progressTarget = makeProgressTarget(options);
   const zip = new JSZip();
 
   // sb2 files have two ways of storing references to files.
@@ -222,10 +250,10 @@ const downloadScratch2 = async (projectData, options, progressTarget) => {
 /**
  * @param {SB3Project} projectData
  * @param {Options} options
- * @param {InternalProgressTarget} progressTarget
  * @returns {Promise<JSZip>}
  */
-const downloadScratch3 = async (projectData, options, progressTarget) => {
+const downloadScratch3 = async (projectData, options) => {
+  const progressTarget = makeProgressTarget(options);
   const zip = new JSZip();
 
   /**
@@ -340,55 +368,19 @@ export const downloadProjectFromJSON = async (projectData, options) => {
     projectData = ExtendedJSON.parse(projectData);
   }
 
-  let isDoneLoadingProject = false;
-  let timeout = null;
-  let loadedAssets = 0;
-  let totalAssets = 0;
-  const sendThrottledAssetProgressUpdate = () => {
-    if (timeout) {
-      return;
-    }
-    timeout = setTimeout(() => {
-      throwIfAborted(options);
-      timeout = null;
-      if (!isDoneLoadingProject && options.onProgress) {
-        options.onProgress('assets', loadedAssets, totalAssets);
-      }
-    });
-  };
-
-  /** @type {InternalProgressTarget} */
-  const progressTarget = {
-    fetching: () => {
-      throwIfAborted(options);
-      totalAssets++;
-      sendThrottledAssetProgressUpdate();
-    },
-    fetched: () => {
-      throwIfAborted(options);
-      loadedAssets++;
-      sendThrottledAssetProgressUpdate();
-    }
-  };
-
   const type = identifyProjectTypeFromJSON(projectData);
 
   /** @type {JSZip} */
   let downloadedZip;
   if (type === 'sb3') {
-    downloadedZip = await downloadScratch3(projectData, options, progressTarget);
+    downloadedZip = await downloadScratch3(projectData, options);
   } else if (type === 'sb2') {
-    downloadedZip = await downloadScratch2(projectData, options, progressTarget);
+    downloadedZip = await downloadScratch2(projectData, options);
   } else {
     throw new Error(`Unknown project type: ${type}`);
   }
 
   throwIfAborted(options);
-
-  if (options.onProgress) {
-    options.onProgress('assets', totalAssets, totalAssets);
-  }
-  isDoneLoadingProject = true;
 
   const zippedProject = await generateZip(downloadedZip, options);
   throwIfAborted(options);
