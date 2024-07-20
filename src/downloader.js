@@ -140,15 +140,16 @@ const isProbablyJSON = (uint8array) => uint8array[0] === '{'.charCodeAt(0);
 
 /**
  * @param {unknown} projectData
+ * @param {JSZip|null} zip
  * @param {Options} options
  * @returns {Promise<JSZip>}
  */
-const downloadScratch2 = async (projectData, options) => {
+const downloadScratch2 = async (projectData, zip, options) => {
   const IMAGE_EXTENSIONS = ['svg', 'png', 'jpg', 'gif','bmp'];
   const SOUND_EXTENSIONS = ['wav', 'mp3'];
 
   const progressTarget = makeProgressTarget(options);
-  const zip = new JSZip();
+  zip = zip || new JSZip();
 
   // sb2 files have two ways of storing references to files.
   // In the online editor they use md5 hashes ("md5ext" because they also have an extension).
@@ -251,12 +252,13 @@ const downloadScratch2 = async (projectData, options) => {
 
 /**
  * @param {SB3Project} projectData
+ * @param {JSZip|null} zip
  * @param {Options} options
  * @returns {Promise<JSZip>}
  */
-const downloadScratch3 = async (projectData, options) => {
+const downloadScratch3 = async (projectData, zip, options) => {
   const progressTarget = makeProgressTarget(options);
-  const zip = new JSZip();
+  zip = zip || new JSZip();
 
   /**
    * @param {SB3Asset[]} assets
@@ -373,9 +375,9 @@ export const downloadProjectFromJSON = async (projectData, options) => {
   /** @type {JSZip} */
   let downloadedZip;
   if (type === 'sb3') {
-    downloadedZip = await downloadScratch3(projectData, options);
+    downloadedZip = await downloadScratch3(projectData, null, options);
   } else if (type === 'sb2') {
-    downloadedZip = await downloadScratch2(projectData, options);
+    downloadedZip = await downloadScratch2(projectData, null, options);
   } else {
     throw new Error(`Unknown project type: ${type}`);
   }
