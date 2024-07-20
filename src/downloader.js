@@ -84,7 +84,7 @@ const makeProgressTarget = (options) => {
  * @param {ProjectType} type
  * @param {unknown} data
  * @param {Options} options
- * @returns {Promise<string>} Stringified JSON object
+ * @returns {Promise<string>} Promise that resolves to stringified JSON object
  */
 const processJSON = async (type, data, options) => {
   if (options.processJSON) {
@@ -160,8 +160,8 @@ const downloadScratch2 = async (projectData, options) => {
 
   const getExtension = (md5ext) => md5ext.split('.')[1] || '';
 
-  const nextId = (md5) => {
-    const extension = getExtension(md5);
+  const nextId = (md5ext) => {
+    const extension = getExtension(md5ext);
     if (IMAGE_EXTENSIONS.includes(extension)) {
       return imageAccumulator++;
     } else if (SOUND_EXTENSIONS.includes(extension)) {
@@ -183,7 +183,7 @@ const downloadScratch2 = async (projectData, options) => {
     };
   };
 
-  const downloadAssets = (assets) => {
+  const downloadAssets = (costumes, sounds) => {
     const md5extToId = new Map();
 
     const handleAsset = (md5ext) => {
@@ -193,15 +193,17 @@ const downloadScratch2 = async (projectData, options) => {
       return md5extToId.get(md5ext);
     };
 
-    for (const asset of assets) {
-      if (asset.md5) {
-        asset.soundID = handleAsset(asset.md5);
+    for (const costume of costumes) {
+      if (costume.baseLayerMD5) {
+        costume.baseLayerID = handleAsset(costume.baseLayerMD5);
       }
-      if (asset.baseLayerMD5) {
-        asset.baseLayerID = handleAsset(asset.baseLayerMD5);
+      if (costume.textLayerMD5) {
+        costume.textLayerID = handleAsset(costume.textLayerMD5);
       }
-      if (asset.textLayerMD5) {
-        asset.textLayerID = handleAsset(asset.textLayerMD5);
+    }
+    for (const sound of sounds) {
+      if (sound.md5) {
+        sound.soundID = handleAsset(sound.md5);
       }
     }
 
@@ -214,7 +216,7 @@ const downloadScratch2 = async (projectData, options) => {
   ];
   const costumes = flat(targets.map((i) => i.costumes || []));
   const sounds = flat(targets.map((i) => i.sounds || []));
-  const filesToAdd = await downloadAssets([...costumes, ...sounds]);
+  const filesToAdd = await downloadAssets(costumes, sounds);
 
   // Project JSON is mutated during loading, so add it at the end.
   zip.file('project.json', await processJSON('sb2', projectData, options));
@@ -261,29 +263,27 @@ const downloadScratch3 = async (projectData, options) => {
    * @returns {SB3Asset[]}
    */
   const prepareAssets = (assets) => {
-    const result = [];
-    const knownIds = new Set();
+    const knownMd5exts = new Set();
+    const missing = [];
 
     for (const data of assets) {
-      // Make sure md5ext always exists.
-      // See the "Cake" costume of https://projects.scratch.mit.edu/630358355 for an example.
-      // https://github.com/forkphorus/forkphorus/issues/504
-      if (!data.md5ext) {
-        data.md5ext = `${data.assetId}.${data.dataFormat}`;
-      }
+      // There are some projects with assets with the same assetId but different extension,
+      // we need to include each of those so we use md5ext instead of asset id, eg.
+      // https://scratch.mit.edu/projects/531881458
 
-      // Deduplicate assets so we don't make unnecessary requests later.
-      // Use md5ext instead of assetId because there are a few projects that have assets with the same
-      // assetId but different md5ext. (eg. https://scratch.mit.edu/projects/531881458)
-      const md5ext = data.md5ext;
-      if (knownIds.has(md5ext)) {
+      // md5ext may not exist, eg. the "Cake" costume of https://projects.scratch.mit.edu/630358355
+      // https://github.com/forkphorus/forkphorus/issues/504
+      const md5ext = data.md5ext || `${data.assetId}.${data.dataFormat}`;
+
+      // Deduplicate assets to avoid unnecessary requests.
+      if (knownMd5exts.has(md5ext)) {
         continue;
       }
-      knownIds.add(md5ext);
-      result.push(data);
+      knownMd5exts.add(md5ext);
+      missing.push(data);
     }
 
-    return result;
+    return missing;
   };
 
   /**
