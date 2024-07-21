@@ -45,14 +45,11 @@ test('progress events received in correct order', async () => {
     ['project', 1, 1],
     ['project', 1, 1],
   ]);
-  expect(allEvents.filter(i => i[0] === 'assets')).toStrictEqual([
-    ['assets', 0, 5],
-    ['assets', 1, 5],
-    ['assets', 2, 5],
-    ['assets', 3, 5],
-    ['assets', 4, 5],
-    ['assets', 5, 5],
-  ]);
+
+  // These are throttled so only first and last events are meant to be reliable
+  const assetEvents = allEvents.filter(i => i[0] === 'assets');
+  expect(assetEvents[0]).toStrictEqual(['assets', 0, 5]);
+  expect(assetEvents[assetEvents.length - 1]).toStrictEqual(['assets', 5, 5]);
 
   expect(project).toMatchSnapshot();
 }, 30000);

@@ -49,15 +49,28 @@ const throwIfAborted = (options) => {
 /**
  * @param {Options} options
  */
-const makeProgressTarget = (options) => {
+const makeAssetProgressTarget = (options) => {
   let totalAssets = 0;
   let loadedAssets = 0;
   let timeout = null;
+  let isDone = false;
 
   const emitProgressUpdate = () => {
     throwIfAborted(options);
 
-    if (!timeout) {
+    if (isDone) {
+      throw new Error('Asset progress target used after completion');
+    } else if (totalAssets === loadedAssets) {
+      // When we're done, don't wait for the timeout as by the time that finishes,
+      // some other event may have been emitted and we would then overwrite it and
+      // be out of order.
+      isDone = true;
+      if (options.onProgress) {
+        options.onProgress('assets', loadedAssets, totalAssets);
+      }
+      clearTimeout(timeout);
+      timeout = null;
+    } else if (!timeout) {
       timeout = setTimeout(() => {
         throwIfAborted(options);
         timeout = null;
@@ -197,7 +210,7 @@ const isProbablyJSON = (uint8array) => uint8array[0] === '{'.charCodeAt(0);
  * @returns {Promise<{zip: JSZip; downloadedAssets: number; modifiedJSON: boolean;}>}
  */
 const downloadScratch2 = async (projectData, zip, options) => {
-  const progressTarget = makeProgressTarget(options);
+  const progressTarget = makeAssetProgressTarget(options);
   zip = zip || new JSZip();
 
   // sb2 files have two ways of storing references to files.
@@ -348,7 +361,7 @@ const downloadScratch2 = async (projectData, zip, options) => {
  * @returns {Promise<{zip: JSZip; downloadedAssets: number; modifiedJSON: boolean;}>}
  */
 const downloadScratch3 = async (projectData, zip, options) => {
-  const progressTarget = makeProgressTarget(options);
+  const progressTarget = makeAssetProgressTarget(options);
   zip = zip || new JSZip();
 
   /**
