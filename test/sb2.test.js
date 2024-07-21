@@ -48,3 +48,9 @@ test('sb2 with non-standard JSON', async () => {
     expect(await zip.file('project.json').async('text')).toBe('{"something":[Infinity,-Infinity,NaN]}');
   }
 }, 30000);
+
+test('sb2 with missing assets', async () => {
+  const data = fs.readFileSync(getFixturePath('missing-assets.sb2'));
+  const project = await SBDL.downloadProjectFromBuffer(data);
+  expect(new Uint8Array(project.arrayBuffer)).toMatchSnapshot();
+});

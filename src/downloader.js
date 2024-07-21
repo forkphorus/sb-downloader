@@ -82,27 +82,36 @@ const makeProgressTarget = (options) => {
 
 /**
  * @param {ProjectType} type
- * @param {unknown} data
+ * @param {SB2Project | SB3Project} data
  * @param {Options} options
- * @returns {Promise<string>} Promise that resolves to stringified JSON object
+ * @returns {Promise<{modified: boolean; stringified: string;}>}
  */
 const processJSON = async (type, data, options) => {
   if (options.processJSON) {
     const newData = await options.processJSON(type, data);
-    if (newData) {
-      data = newData;
-    }
     throwIfAborted(options);
+
+    if (newData) {
+      return {
+        modified: true,
+        stringified: ExtendedJSON.stringify(newData)
+      };
+    }
   }
-  return ExtendedJSON.stringify(data);
+
+  return {
+    modified: false,
+    stringified: ExtendedJSON.stringify(data)
+  };
 };
 
 const isAbortError = (error) => error && error.name === 'AbortError';
 
 /**
  * Browser support for Array.prototype.flat is not to the level we want.
- * @param {unknown[]} array
- * @returns {unknown[]}
+ * @template T
+ * @param {T[][]} array
+ * @returns {T[]}
  */
 const flat = (array) => {
   const result = [];
@@ -139,15 +148,55 @@ const isScratch1Project = (uint8array) => {
 const isProbablyJSON = (uint8array) => uint8array[0] === '{'.charCodeAt(0);
 
 /**
- * @param {unknown} projectData
+ * @typedef SB2Project
+ * @property {SB2Costume[]} costumes
+ * @property {SB2Sound[]} sounds
+ * @property {Array<SB2ListMonitor | SB2VariableMonitor | SB2Sprite>} children
+ */
+
+/**
+ * @typedef SB2ListMonitor
+ * @property {string} listName
+ */
+
+/**
+ * @typedef SB2VariableMonitor
+ * @property {string} target
+ */
+
+/**
+ * @typedef SB2Sprite
+ * @property {SB2Costume[]} costumes
+ * @property {SB2Sound[]} sounds
+ */
+
+/**
+ * @typedef SB2Costume
+ * @property {string} costumeName
+ * @property {number} baseLayerID
+ * @property {string} baseLayerMD5
+ * @property {number} bitmapResolution
+ * @property {number} rotationCenterX
+ * @property {number} rotationCenterY
+ */
+
+/**
+ * @typedef SB2Sound
+ * @property {string} soundName
+ * @property {number} soundID
+ * @property {string} md5
+ * @property {number} sampleCount
+ * @property {number} rate
+ * @property {string} format
+ */
+
+/**
+ * @param {SB2Project} projectData
  * @param {JSZip|null} zip
  * @param {Options} options
- * @returns {Promise<JSZip>}
+ * @returns {Promise<{zip: JSZip; downloadedAssets: number; modifiedJSON: boolean;}>}
  */
 const downloadScratch2 = async (projectData, zip, options) => {
-  const IMAGE_EXTENSIONS = ['svg', 'png', 'jpg', 'gif', 'bmp'];
-  const SOUND_EXTENSIONS = ['wav', 'mp3'];
-
   const progressTarget = makeProgressTarget(options);
   zip = zip || new JSZip();
 
@@ -156,22 +205,13 @@ const downloadScratch2 = async (projectData, zip, options) => {
   // In the offline editor they use separate integer file IDs for images and sounds.
   // We need the sb2 to use those integer file IDs, but the ones from the Scratch API don't have those, so we create them ourselves
 
-  let soundAccumulator = 0;
-  let imageAccumulator = 0;
-
   const getExtension = (md5ext) => md5ext.split('.')[1] || '';
 
-  const nextId = (md5ext) => {
-    const extension = getExtension(md5ext);
-    if (IMAGE_EXTENSIONS.includes(extension)) {
-      return imageAccumulator++;
-    } else if (SOUND_EXTENSIONS.includes(extension)) {
-      return soundAccumulator++;
-    }
-    console.warn('unknown extension: ' + extension);
-    return imageAccumulator++;
-  };
-
+  /**
+   * @param {string} md5ext
+   * @param {number} id
+   * @returns {Promise<{path: string, data: ArrayBuffer}>}
+   */
   const fetchAndStoreAsset = async (md5ext, id) => {
     progressTarget.fetching(md5ext);
     // assetHost will never be undefined here because of parseOptions()
@@ -184,33 +224,79 @@ const downloadScratch2 = async (projectData, zip, options) => {
     };
   };
 
+  /**
+   * @param {SB2Costume[]} costumes
+   * @param {SB2Sound[]} sounds
+   * @returns {Promise<{path: string, data: ArrayBuffer}[]>}
+   */
   const downloadAssets = (costumes, sounds) => {
     const md5extToId = new Map();
+    const needToFetch = [];
 
-    const handleAsset = (md5ext) => {
+    // First pass: see which assets are already in the zip, as that determines
+    // which asset IDs we can use for fetched assets
+
+    let largestCostumeId = -1;
+    for (const costume of costumes) {
+      const baseLayerExtension = getExtension(costume.baseLayerMD5) || 'png';
+      if (costume.baseLayerID >= 0 && zip.file(`${costume.baseLayerID}.${baseLayerExtension}`)) {
+        md5extToId.set(costume.baseLayerMD5, costume.baseLayerID);
+        largestCostumeId = Math.max(largestCostumeId, costume.baseLayerID);
+      }
+
+      if (costume.textLayerMD5) {
+        if (costume.textLayerID >= 0 && zip.file(`${costume.textLayerID}.png`)) {
+          md5extToId.set(costume.textLayerMD5, costume.textLayerID);
+          largestCostumeId = Math.max(largestCostumeId, costume.textLayerID);
+        }
+      }
+    }
+
+    let largestSoundId = -1;
+    for (const sound of sounds) {
+      if (sound.soundID >= 0 && zip.file(`${sound.soundID}.${getExtension(sound.md5)}`)) {
+        md5extToId.set(sound.md5, sound.soundID);
+        largestSoundId = Math.max(largestSoundId, sound.soundID);
+      }
+    }
+
+    // Second pass: assign new IDs to all unknown assets
+
+    let costumeAccumulator = largestCostumeId === -1 ? 0 : largestCostumeId + 1;
+    let soundAccumulator = largestSoundId === -1 ? 0 : largestSoundId + 1;
+    const assignCostumeId = (md5ext) => {
       if (!md5extToId.has(md5ext)) {
-        md5extToId.set(md5ext, nextId(md5ext));
+        needToFetch.push(md5ext);
+        md5extToId.set(md5ext, costumeAccumulator);
+        costumeAccumulator++;
+      }
+      return md5extToId.get(md5ext);
+    };
+    const assignSoundId = (md5ext) => {
+      if (!md5extToId.has(md5ext)) {
+        needToFetch.push(md5ext);
+        md5extToId.set(md5ext, soundAccumulator);
+        soundAccumulator++;
       }
       return md5extToId.get(md5ext);
     };
 
     for (const costume of costumes) {
-      if (costume.baseLayerMD5) {
-        costume.baseLayerID = handleAsset(costume.baseLayerMD5);
-      }
+      costume.baseLayerID = assignCostumeId(costume.baseLayerMD5);
       if (costume.textLayerMD5) {
-        costume.textLayerID = handleAsset(costume.textLayerMD5);
-      }
-    }
-    for (const sound of sounds) {
-      if (sound.md5) {
-        sound.soundID = handleAsset(sound.md5);
+        costume.textLayerID = assignCostumeId(costume.textLayerMD5);
       }
     }
 
-    return Promise.all(Array.from(md5extToId.entries()).map(([md5ext, id]) => fetchAndStoreAsset(md5ext, id)));
+    for (const sound of sounds) {
+      sound.soundID = assignSoundId(sound.md5);
+    }
+
+    // Now we know what to download and where to store it.
+    return Promise.all(needToFetch.map(md5ext => fetchAndStoreAsset(md5ext, md5extToId.get(md5ext))));
   };
 
+  /** @type {SB2Sprite[]} */
   const targets = [
     projectData,
     ...projectData.children.filter((c) => !c.listName && !c.target)
@@ -220,14 +306,19 @@ const downloadScratch2 = async (projectData, zip, options) => {
   const filesToAdd = await downloadAssets(costumes, sounds);
 
   // Project JSON is mutated during loading, so add it at the end.
-  zip.file('project.json', await processJSON('sb2', projectData, options));
+  const processedJSON = await processJSON('sb2', projectData, options);
+  zip.file('project.json', processedJSON.stringified);
 
   // Add files to the zip at the end so the order will be consistent.
   for (const {path, data} of filesToAdd) {
     zip.file(path, data);
   }
 
-  return zip;
+  return {
+    downloadedAssets: filesToAdd.length,
+    modifiedJSON: processedJSON.modified,
+    zip
+  };
 };
 
 /**
@@ -315,7 +406,7 @@ const downloadScratch3 = async (projectData, zip, options) => {
   const assets = prepareAssets([...costumes, ...sounds]);
   const filesToAdd = await Promise.all(assets.map(addFile));
 
-  zip.file('project.json', await processJSON('sb3', projectData, options));
+  zip.file('project.json', (await processJSON('sb3', projectData, options)).stringified);
 
   // Add files to the zip at the end so the order will be consistent.
   for (const {path, data} of filesToAdd) {
@@ -377,7 +468,7 @@ export const downloadProjectFromJSON = async (projectData, options) => {
   if (type === 'sb3') {
     downloadedZip = await downloadScratch3(projectData, null, options);
   } else if (type === 'sb2') {
-    downloadedZip = await downloadScratch2(projectData, null, options);
+    downloadedZip = (await downloadScratch2(projectData, null, options)).zip;
   } else {
     throw new Error(`Unknown project type: ${type}`);
   }
@@ -447,13 +538,23 @@ export const downloadProjectFromBuffer = async (data, options) => {
 
   let needToReZip = !!options.date;
 
-  if (options.processJSON) {
-    const newJSON = await options.processJSON(type, projectData);
-    if (newJSON) {
+  if (type === 'sb3') {
+    // TODO: download missing assets
+    if (options.processJSON) {
+      const newJSON = await options.processJSON(type, projectData);
+      if (newJSON) {
+        needToReZip = true;
+        zip.file(projectDataFile.name, ExtendedJSON.stringify(newJSON));
+      }
+    }
+  } else if (type === 'sb2') {
+    const result = await downloadScratch2(projectData, zip, options);
+    if (result.downloadedAssets > 0 || result.modifiedJSON) {
       needToReZip = true;
-      zip.file(projectDataFile.name, ExtendedJSON.stringify(newJSON));
     }
   }
+
+  throwIfAborted(options);
 
   if (needToReZip) {
     data = await generateZip(zip, options);
