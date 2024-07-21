@@ -50,7 +50,7 @@ exports[`process JSON sb3 without making changes 1`] = `
 
 exports[`process and overwrite compressed sb3 with JSON in subdirectory 1`] = `
 {
-  "arrayBuffer": ArrayBuffer [SHA-256 adf166379ca1e198d366a5aa3ceaac54d4a7dbdf3cc48b025fc0d65343614f08],
+  "arrayBuffer": ArrayBuffer [SHA-256 13bcf733a6d50b59054bdeb9458ee346081cfac795100bcd6c61dec57d8c012d],
   "title": "",
   "type": "sb3",
 }
@@ -66,7 +66,7 @@ exports[`process compressed sb2 without making changes 1`] = `
 
 exports[`process compressed sb3 with JSON in subdirectory without making changes 1`] = `
 {
-  "arrayBuffer": ArrayBuffer [SHA-256 52fa4c6fcffc48214861e5ad8f37f79b2a11e567d28674e10dd32f7e4bc5af2c],
+  "arrayBuffer": ArrayBuffer [SHA-256 232be6275f7745ab2730e9fa3d83d6417b9f8ed4c05e5d5e38453301ff2d4840],
   "title": "",
   "type": "sb3",
 }

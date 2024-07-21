@@ -345,7 +345,7 @@ const downloadScratch2 = async (projectData, zip, options) => {
  * @param {SB3Project} projectData
  * @param {JSZip|null} zip
  * @param {Options} options
- * @returns {Promise<JSZip>}
+ * @returns {Promise<{zip: JSZip; downloadedAssets: number; modifiedJSON: boolean;}>}
  */
 const downloadScratch3 = async (projectData, zip, options) => {
   const progressTarget = makeProgressTarget(options);
@@ -353,39 +353,43 @@ const downloadScratch3 = async (projectData, zip, options) => {
 
   /**
    * @param {SB3Asset[]} assets
-   * @returns {SB3Asset[]}
+   * @returns {string[]}
    */
   const prepareAssets = (assets) => {
     const knownMd5exts = new Set();
     const missing = [];
 
-    for (const data of assets) {
+    for (const asset of assets) {
       // There are some projects with assets with the same assetId but different extension,
       // we need to include each of those so we use md5ext instead of asset id, eg.
       // https://scratch.mit.edu/projects/531881458
 
       // md5ext may not exist, eg. the "Cake" costume of https://projects.scratch.mit.edu/630358355
       // https://github.com/forkphorus/forkphorus/issues/504
-      const md5ext = data.md5ext || `${data.assetId}.${data.dataFormat}`;
+      const md5ext = asset.md5ext || `${asset.assetId}.${asset.dataFormat}`;
 
       // Deduplicate assets to avoid unnecessary requests.
       if (knownMd5exts.has(md5ext)) {
         continue;
       }
+
+      // Don't download assets that are already in the zip
+      if (zip.file(md5ext)) {
+        continue;
+      }
+
       knownMd5exts.add(md5ext);
-      missing.push(data);
+      missing.push(md5ext);
     }
 
     return missing;
   };
 
   /**
-   * @param {SB3Asset} data
+   * @param {string} md5ext
    * @returns {Promise<void>}
    */
-  const addFile = async (data) => {
-    // prepareAssets will guarantee md5ext exists
-    const md5ext = data.md5ext;
+  const addFile = async (md5ext) => {
     progressTarget.fetching(md5ext);
 
     // assetHost will never be undefined here because of parseOptions()
@@ -406,14 +410,19 @@ const downloadScratch3 = async (projectData, zip, options) => {
   const assets = prepareAssets([...costumes, ...sounds]);
   const filesToAdd = await Promise.all(assets.map(addFile));
 
-  zip.file('project.json', (await processJSON('sb3', projectData, options)).stringified);
+  const processedJSON = await processJSON('sb3', projectData, options);
+  zip.file('project.json', processedJSON.stringified);
 
   // Add files to the zip at the end so the order will be consistent.
   for (const {path, data} of filesToAdd) {
     zip.file(path, data);
   }
 
-  return zip;
+  return {
+    zip,
+    modifiedJSON: processedJSON.modified,
+    downloadedAssets: filesToAdd.length
+  };
 };
 
 /**
@@ -466,7 +475,7 @@ export const downloadProjectFromJSON = async (projectData, options) => {
   /** @type {JSZip} */
   let downloadedZip;
   if (type === 'sb3') {
-    downloadedZip = await downloadScratch3(projectData, null, options);
+    downloadedZip = (await downloadScratch3(projectData, null, options)).zip;
   } else if (type === 'sb2') {
     downloadedZip = (await downloadScratch2(projectData, null, options)).zip;
   } else {
@@ -517,6 +526,7 @@ export const downloadProjectFromBuffer = async (data, options) => {
 
   // Compressed project. Need to unzip to figure out what type it is.
   let zip;
+  let needToReZip = !!options.date;
   try {
     zip = await JSZip.loadAsync(data);
   } catch (e) {
@@ -525,7 +535,37 @@ export const downloadProjectFromBuffer = async (data, options) => {
 
   throwIfAborted(options);
 
-  const projectDataFile = zip.file(/^([^/]*\/)?project\.json$/)[0];
+  // Copy all files in subdirectories to the root. This makes logic much simpler later on
+  // when we download assets or process JSON and ensures that makes our outputs more
+  // "normalized".
+  for (const oldPath of Object.keys(zip.files)) {
+    if (oldPath.endsWith('/') || !oldPath.includes('/')) {
+      continue;
+    }
+
+    // Array.prototype.at(-1) support is not good enough
+    const parts = oldPath.split('/');
+    const newPath = parts[parts.length - 1];
+
+    if (zip.file(newPath)) {
+      throw new Error(`Path conflict ${oldPath}`);
+    }
+
+    zip.file(newPath, await zip.file(oldPath).async('uint8array'));
+    zip.remove(oldPath);
+    needToReZip = true;
+
+    throwIfAborted(options);
+  }
+
+  // Remove the now-empty subdirectories themselves
+  for (const path of Object.keys(zip.files)) {
+    if (path.includes('/')) {
+      zip.remove(path);
+    }
+  }
+
+  const projectDataFile = zip.file('project.json');
   if (!projectDataFile) {
     throw new Error('project.json is missing');
   }
@@ -536,22 +576,18 @@ export const downloadProjectFromBuffer = async (data, options) => {
 
   throwIfAborted(options);
 
-  let needToReZip = !!options.date;
-
   if (type === 'sb3') {
-    // TODO: download missing assets
-    if (options.processJSON) {
-      const newJSON = await options.processJSON(type, projectData);
-      if (newJSON) {
-        needToReZip = true;
-        zip.file(projectDataFile.name, ExtendedJSON.stringify(newJSON));
-      }
+    const result = await downloadScratch3(projectData, zip, options);
+    if (result.downloadedAssets > 0 || result.modifiedJSON) {
+      needToReZip = true;
     }
   } else if (type === 'sb2') {
     const result = await downloadScratch2(projectData, zip, options);
     if (result.downloadedAssets > 0 || result.modifiedJSON) {
       needToReZip = true;
     }
+  } else {
+    throw new Error(`Unknown project type: ${type}`);
   }
 
   throwIfAborted(options);

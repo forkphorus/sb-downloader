@@ -1,5 +1,9 @@
 // Vitest Snapshot v1
 
+exports[`downloads missing assets 1`] = `ArrayBuffer [SHA-256 bbded48ad46f4c1fa9929ffadd17ecdfa94b2d322c8a7e0409c629c44d103f41]`;
+
+exports[`downloads missing assets 2`] = `ArrayBuffer [SHA-256 4f25165fae50acf1ae0c05e19e0ecc363e3c93fb263ad84c67b1412ab53e5a4c]`;
+
 exports[`sb3 project from JSON 1`] = `
 {
   "arrayBuffer": ArrayBuffer [SHA-256 73f90aff8695ab18da8736f7a0b5054bed29cb2fc08fe59ab34da7d82c6a74d0],
@@ -7,3 +11,5 @@ exports[`sb3 project from JSON 1`] = `
   "type": "sb3",
 }
 `;
+
+exports[`sb3 project from sb3 with project.json in a subdirectory 1`] = `ArrayBuffer [SHA-256 232be6275f7745ab2730e9fa3d83d6417b9f8ed4c05e5d5e38453301ff2d4840]`;

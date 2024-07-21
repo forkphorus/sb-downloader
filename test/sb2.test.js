@@ -51,6 +51,17 @@ test('sb2 with non-standard JSON', async () => {
 
 test('sb2 with missing assets', async () => {
   const data = fs.readFileSync(getFixturePath('missing-assets.sb2'));
-  const project = await SBDL.downloadProjectFromBuffer(data);
-  expect(new Uint8Array(project.arrayBuffer)).toMatchSnapshot();
+  let loadedAssets = -1;
+  let totalAssets = -1;
+  const project = await SBDL.downloadProjectFromBuffer(data, {
+    onProgress: (type, loaded, total) => {
+      if (type === 'assets') {
+        loadedAssets = loaded;
+        totalAssets = total;
+      }
+    }
+  });
+  expect(loadedAssets).toBe(5);
+  expect(totalAssets).toBe(5);
+  expect(project.arrayBuffer).toMatchSnapshot();
 });

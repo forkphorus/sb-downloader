@@ -102,6 +102,7 @@ test('process compressed sb3 without making changes', async () => {
 });
 
 test('process compressed sb3 with JSON in subdirectory without making changes', async () => {
+  let compressed = false;
   const processJSON = vi.fn((type, data) => {
     expect(type).toBe('sb3');
     expect(data.targets[0].name).toBe('Stage');
@@ -110,10 +111,14 @@ test('process compressed sb3 with JSON in subdirectory without making changes', 
   const project = await SBDL.downloadProjectFromBuffer(input, {
     processJSON,
     onProgress: (type) => {
-      expect(type).not.toBe('compress');
+      // Even though we aren't modifying, we expect it to recompress to remove the subdirectory
+      if (type === 'compress') {
+        compressed = true;
+      }
     }
   });
-  expect(new Uint8Array(project.arrayBuffer)).toStrictEqual(new Uint8Array(input));
+  expect(compressed).toBe(true);
+  expect(project.type).toBe('sb3');
   expect(processJSON).toHaveBeenCalledOnce();
   expect(project).toMatchSnapshot();
 });
@@ -178,7 +183,8 @@ test('process and overwrite compressed sb3 with JSON in subdirectory', async () 
   expect(processJSON).toHaveBeenCalledOnce();
   expect(project).toMatchSnapshot();
   const zip = await JSZip.loadAsync(project.arrayBuffer);
-  expect(await zip.file('this is a subdirectory/project.json').async('text')).toBe('{"h":{"i":true}}');
+  expect(zip.file('this is a subdirectory/project.json')).toBeNull();
+  expect(await zip.file('project.json').async('text')).toBe('{"h":{"i":true}}');
 });
 
 test('process silently ignored on scratch 1', async () => {
