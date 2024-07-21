@@ -58,7 +58,7 @@ const SBDL = require('@turbowarp/sbdl');
 If you just want to run it in a website and don't want to use a full package manager, you can instead use the standalone version using a simple `<script>` tag. Please make sure to replace the version number in the snippet below with the latest version from https://github.com/forkphorus/sb-downloader/releases; sometimes we forget to update it.
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@turbowarp/sbdl@4.0.0/lib/bundle-standalone.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turbowarp/sbdl@4.0.1/lib/bundle-standalone.min.js"></script>
 <script>
   // .sb downloader is exported as `SBDL` on window
   // See the "Standalone version" below for more information specifically about the standalone version
