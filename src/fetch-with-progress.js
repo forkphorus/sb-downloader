@@ -46,7 +46,11 @@ const fetchAsArrayBufferWithProgress = async (url, progressCallback, abortSignal
   }
 
   // Running in Node.js
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    headers: {
+      'user-agent': 'SBDL/1.0 (+https://www.npmjs.com/package/@turbowarp/sbdl)'
+    },
+  });
   if (response.status !== 200) {
     throw new HTTPError(url, response.status);
   }
