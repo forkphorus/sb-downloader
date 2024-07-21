@@ -74,3 +74,11 @@ test('downloads missing assets', async () => {
     expect(await zip1.file(path).async('uint8array')).toStrictEqual(await zip2.file(path).async('uint8array'));
   }
 });
+
+test('extra empty subdirectory is removed', async () => {
+  const fixtureData = fs.readFileSync(getFixturePath('extra-empty-subdirectory.sb3'));
+  const project = await SBDL.downloadProjectFromBuffer(fixtureData);
+  const zip = await JSZip.loadAsync(project.arrayBuffer);
+  expect(zip.files['empty/']).toBe(undefined);
+  expect(project.arrayBuffer).toMatchSnapshot();
+});

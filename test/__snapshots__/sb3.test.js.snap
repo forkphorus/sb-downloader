@@ -4,6 +4,8 @@ exports[`downloads missing assets 1`] = `ArrayBuffer [SHA-256 bbded48ad46f4c1fa9
 
 exports[`downloads missing assets 2`] = `ArrayBuffer [SHA-256 4f25165fae50acf1ae0c05e19e0ecc363e3c93fb263ad84c67b1412ab53e5a4c]`;
 
+exports[`extra empty subdirectory is removed 1`] = `ArrayBuffer [SHA-256 4532296b54eb844a047bf07efa5ff4a21fcff07df64a91a344ca1a7a4a18a8fe]`;
+
 exports[`sb3 project from JSON 1`] = `
 {
   "arrayBuffer": ArrayBuffer [SHA-256 73f90aff8695ab18da8736f7a0b5054bed29cb2fc08fe59ab34da7d82c6a74d0],

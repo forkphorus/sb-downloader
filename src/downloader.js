@@ -579,6 +579,7 @@ export const downloadProjectFromBuffer = async (data, options) => {
   for (const path of Object.keys(zip.files)) {
     if (path.includes('/')) {
       zip.remove(path);
+      needToReZip = true;
     }
   }
 
