@@ -228,7 +228,9 @@ const downloadScratch2 = async (projectData, zip, options) => {
   const fetchAndStoreAsset = async (md5ext, id) => {
     progressTarget.fetching(md5ext);
     // assetHost will never be undefined here because of parseOptions()
-    const arrayBuffer = await fetchAsArrayBuffer(options.assetHost.replace('$id', md5ext))
+    const arrayBuffer = await fetchAsArrayBuffer(options.assetHost.replace('$id', md5ext), {
+      headers: environment.headers
+    });
     const path = `${id}.${getExtension(md5ext)}`;
     progressTarget.fetched(md5ext);
     return {
@@ -407,7 +409,8 @@ const downloadScratch3 = async (projectData, zip, options) => {
 
     // assetHost will never be undefined here because of parseOptions()
     const buffer = await fetchAsArrayBuffer(options.assetHost.replace('$id', md5ext), {
-      signal: options.signal
+      signal: options.signal,
+      headers: environment.headers
     });
 
     progressTarget.fetched(md5ext);
@@ -674,7 +677,8 @@ export const getProjectMetadata = async (id, options) => {
   for (const url of urls) {
     try {
       const response = await fetch(url, {
-        signal: options.signal
+        signal: options.signal,
+        headers: environment.headers
       });
       if (response.status === 404) {
         throw new CanNotAccessProjectError(`${id} is unshared or does not exist`);
