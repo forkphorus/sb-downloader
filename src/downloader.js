@@ -104,7 +104,7 @@ const storeProjectJSON = async (zip, type, projectData, options) => {
   if (options.processJSON) {
     const newData = await options.processJSON(type, projectData);
     throwIfAborted(options);
-  
+
     if (newData) {
       zip.file('project.json', ExtendedJSON.stringify(newData));
       return true;
