@@ -8,4 +8,4 @@ exports[`sb2 project from JSON 1`] = `
 }
 `;
 
-exports[`sb2 with missing assets 1`] = `ArrayBuffer [SHA-256 78ecbe536115ddce51dd83b12724f93ac0df194f71640fc66af0d244eeca6b8d]`;
+exports[`sb2 with missing assets 1`] = `ArrayBuffer [SHA-256 1c367617dace20dba11108dd433165fabd3553cdadaab21231857e478af99de0]`;

@@ -94,28 +94,31 @@ const makeAssetProgressTarget = (options) => {
 };
 
 /**
+ * @param {JSZip} zip
  * @param {ProjectType} type
- * @param {SB2Project | SB3Project} data
+ * @param {SB2Project|SB3Project} projectData
  * @param {Options} options
- * @returns {Promise<{modified: boolean; stringified: string;}>}
+ * @returns {Promise<boolean>} True if the zip was modified
  */
-const processJSON = async (type, data, options) => {
+const storeProjectJSON = async (zip, type, projectData, options) => {
   if (options.processJSON) {
-    const newData = await options.processJSON(type, data);
+    const newData = await options.processJSON(type, projectData);
     throwIfAborted(options);
-
+  
     if (newData) {
-      return {
-        modified: true,
-        stringified: ExtendedJSON.stringify(newData)
-      };
+      zip.file('project.json', ExtendedJSON.stringify(newData));
+      return true;
     }
   }
 
-  return {
-    modified: false,
-    stringified: ExtendedJSON.stringify(data)
-  };
+  // If project.json is already in the zip, don't overwrite it as that would lose
+  // possibly interesting data from sb2 projects with comments in the JSON.
+  if (!zip.file('project.json')) {
+    zip.file('project.json', ExtendedJSON.stringify(projectData));
+    return true;
+  }
+
+  return false;
 };
 
 const isAbortError = (error) => error && error.name === 'AbortError';
@@ -321,8 +324,7 @@ const downloadScratch2 = async (projectData, zip, options) => {
   const filesToAdd = await downloadAssets(costumes, sounds);
 
   // Project JSON is mutated during loading, so add it at the end.
-  const processedJSON = await processJSON('sb2', projectData, options);
-  zip.file('project.json', processedJSON.stringified);
+  const modifiedJSON = await storeProjectJSON(zip, 'sb2', projectData, options);
 
   // Add files to the zip at the end so the order will be consistent.
   for (const {path, data} of filesToAdd) {
@@ -331,7 +333,7 @@ const downloadScratch2 = async (projectData, zip, options) => {
 
   return {
     downloadedAssets: filesToAdd.length,
-    modifiedJSON: processedJSON.modified,
+    modifiedJSON: modifiedJSON,
     zip
   };
 };
@@ -426,8 +428,7 @@ const downloadScratch3 = async (projectData, zip, options) => {
   const assets = prepareAssets([...costumes, ...sounds]);
   const filesToAdd = await Promise.all(assets.map(addFile));
 
-  const processedJSON = await processJSON('sb3', projectData, options);
-  zip.file('project.json', processedJSON.stringified);
+  const modifiedJSON = await storeProjectJSON(zip, 'sb3', projectData, options);
 
   // Add files to the zip at the end so the order will be consistent.
   for (const {path, data} of filesToAdd) {
@@ -436,7 +437,7 @@ const downloadScratch3 = async (projectData, zip, options) => {
 
   return {
     zip,
-    modifiedJSON: processedJSON.modified,
+    modifiedJSON,
     downloadedAssets: filesToAdd.length
   };
 };

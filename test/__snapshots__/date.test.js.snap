@@ -34,7 +34,7 @@ exports[`date is honored on JSON sb3 project 1`] = `
 
 exports[`date is honored on compressed sb2 1`] = `
 {
-  "arrayBuffer": ArrayBuffer [SHA-256 a2e9a14f75b68721c8da71707daa6d06dd2786db37787ec4dd4bc136501c8687],
+  "arrayBuffer": ArrayBuffer [SHA-256 eb54c0ffec40e010ed699143d9d1bbc1e85dbaeef9f40424d9bd16504dd5abb0],
   "title": "",
   "type": "sb2",
 }

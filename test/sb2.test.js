@@ -64,4 +64,9 @@ test('sb2 with missing assets', async () => {
   expect(loadedAssets).toBe(5);
   expect(totalAssets).toBe(5);
   expect(project.arrayBuffer).toMatchSnapshot();
+
+  // Even though it was rezipped, project.json should not change
+  const zip = await JSZip.loadAsync(project.arrayBuffer);
+  const text = await zip.file('project.json').async('text');
+  expect(text.includes('// Comment that shouldn\'t be removed :)\n')).toBe(true);
 });
