@@ -361,7 +361,9 @@
 
     <script type="module">
       import JSZip from 'jszip';
-      import {downloadProjectFromID} from './src/export-web.js';
+      import * as SBDL from './src/export-web.js';
+
+      window.SBDL = SBDL;
 
       /**
        * @param {string} text
@@ -591,7 +593,7 @@
             signal: localAbortController.signal
           };
 
-          const project = await downloadProjectFromID(projectId, options);
+          const project = await SBDL.downloadProjectFromID(projectId, options);
           mostRecentProject = project;
 
           const title = project.title ? `${project.title} (${projectId})` : projectId;
