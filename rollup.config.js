@@ -2,14 +2,14 @@ import fs from 'node:fs';
 import commonjs from '@rollup/plugin-commonjs';
 import {nodeResolve} from '@rollup/plugin-node-resolve';
 import license from 'rollup-plugin-license';
-import {version} from './package.json';
+import * as packageJSON from './package.json' assert {type: 'json'};
 
 const external = ['jszip', 'cross-fetch', '@turbowarp/json'];
 
 const headerPlugin = license({
   banner: {
     commentStyle: 'ignored',
-    content: `SBDL v${version} <https://github.com/forkphorus/sb-downloader>\n\n${fs.readFileSync('LICENSE', 'utf-8')}`
+    content: `SBDL v${packageJSON.version} <https://github.com/forkphorus/sb-downloader>\n\n${fs.readFileSync('LICENSE', 'utf-8')}`
   }
 });
 
