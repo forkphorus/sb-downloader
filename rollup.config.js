@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import commonjs from '@rollup/plugin-commonjs';
 import {nodeResolve} from '@rollup/plugin-node-resolve';
 import license from 'rollup-plugin-license';
-import * as packageJSON from './package.json' assert {type: 'json'};
+import * as packageJSON from './package.json' with {type: 'json'};
 
 const external = ['jszip', 'cross-fetch', '@turbowarp/json'];
 

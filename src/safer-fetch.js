@@ -1,4 +1,4 @@
-import fetch from 'cross-fetch';
+import {fetch} from 'cross-fetch';
 import {HTTPError} from './errors.js';
 
 // Based on https://github.com/TurboWarp/scratch-storage/blob/develop/src/safer-fetch.js

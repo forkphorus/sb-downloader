@@ -1,4 +1,4 @@
-import fetch from 'cross-fetch';
+import {fetch} from 'cross-fetch';
 import {AbortError, HTTPError} from './errors.js';
 import environment from './environment.js';
 

@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import fetch from 'cross-fetch';
+import {fetch} from 'cross-fetch';
 import * as ExtendedJSON from '@turbowarp/json';
 import {AbortError, CanNotAccessProjectError, HTTPError} from './errors.js';
 import fetchAsArrayBuffer from './safer-fetch.js';
