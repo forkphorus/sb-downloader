@@ -1,8 +1,11 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import commonjs from '@rollup/plugin-commonjs';
 import {nodeResolve} from '@rollup/plugin-node-resolve';
 import license from 'rollup-plugin-license';
-import * as packageJSON from './package.json' with {type: 'json'};
+
+const packageJSONText = fs.readFileSync(path.join(import.meta.dirname, 'package.json'), 'utf-8');
+const packageJSON = JSON.parse(packageJSONText);
 
 const external = ['jszip', 'cross-fetch', '@turbowarp/json'];
 
