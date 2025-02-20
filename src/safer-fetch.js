@@ -1,5 +1,8 @@
-import {fetch} from 'cross-fetch';
+import * as crossFetch from 'cross-fetch';
 import {HTTPError} from './errors.js';
+
+// define fetch so that in webpack, the `this` won't be the crossFetch module
+const fetch = crossFetch.fetch;
 
 // Based on https://github.com/TurboWarp/scratch-storage/blob/develop/src/safer-fetch.js
 

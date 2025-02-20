@@ -1,6 +1,9 @@
-import {fetch} from 'cross-fetch';
+import * as crossFetch from 'cross-fetch';
 import {AbortError, HTTPError} from './errors.js';
 import environment from './environment.js';
+
+// define fetch so that in webpack, the `this` won't be the crossFetch module
+const fetch = crossFetch.fetch;
 
 /**
  * @param {stirng} url
