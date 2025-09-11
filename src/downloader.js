@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 import * as crossFetch from 'cross-fetch';
 import * as ExtendedJSON from '@turbowarp/json';
 import {AbortError, CanNotAccessProjectError, HTTPError} from './errors.js';
-import fetchAsArrayBuffer from './safer-fetch.js';
+import fetchAsset from './fetch-asset.js';
 import fetchAsArrayBufferWithProgress from './fetch-with-progress.js';
 import environment from './environment.js';
 
@@ -229,16 +229,22 @@ const downloadScratch2 = async (projectData, zip, options) => {
   /**
    * @param {string} md5ext
    * @param {number} id
-   * @returns {Promise<{path: string, data: ArrayBuffer}>}
+   * @returns {Promise<{path: string, data: ArrayBuffer}|null>}
    */
   const fetchAndStoreAsset = async (md5ext, id) => {
     progressTarget.fetching(md5ext);
+
     // assetHost will never be undefined here because of parseOptions()
-    const arrayBuffer = await fetchAsArrayBuffer(options.assetHost.replace('$id', md5ext), {
+    const arrayBuffer = await fetchAsset(options.assetHost.replace('$id', md5ext), {
       headers: environment.headers
     });
-    const path = `${id}.${getExtension(md5ext)}`;
+
     progressTarget.fetched(md5ext);
+    if (!arrayBuffer) {
+      return null;
+    }
+
+    const path = `${id}.${getExtension(md5ext)}`;
     return {
       path,
       data: arrayBuffer
@@ -248,7 +254,7 @@ const downloadScratch2 = async (projectData, zip, options) => {
   /**
    * @param {SB2Costume[]} costumes
    * @param {SB2Sound[]} sounds
-   * @returns {Promise<{path: string, data: ArrayBuffer}[]>}
+   * @returns {Promise<Array<{path: string, data: ArrayBuffer}|null>>}
    */
   const downloadAssets = (costumes, sounds) => {
     const md5extToId = new Map();
@@ -324,7 +330,7 @@ const downloadScratch2 = async (projectData, zip, options) => {
   ];
   const costumes = flat(targets.map((i) => i.costumes || []));
   const sounds = flat(targets.map((i) => i.sounds || []));
-  const filesToAdd = await downloadAssets(costumes, sounds);
+  const filesToAdd = (await downloadAssets(costumes, sounds)).filter(i => i !== null);
 
   // Project JSON is mutated during loading, so add it at the end.
   const modifiedJSON = await storeProjectJSON(zip, 'sb2', projectData, options);
@@ -407,21 +413,26 @@ const downloadScratch3 = async (projectData, zip, options) => {
 
   /**
    * @param {string} md5ext
-   * @returns {Promise<void>}
+   * @returns {Promise<{path: string, data: ArrayBuffer}|null>}
    */
   const addFile = async (md5ext) => {
     progressTarget.fetching(md5ext);
 
     // assetHost will never be undefined here because of parseOptions()
-    const buffer = await fetchAsArrayBuffer(options.assetHost.replace('$id', md5ext), {
+    const arrayBuffer = await fetchAsset(options.assetHost.replace('$id', md5ext), {
       signal: options.signal,
       headers: environment.headers
     });
 
     progressTarget.fetched(md5ext);
+
+    if (!arrayBuffer) {
+      return null;
+    }
+
     return {
       path: md5ext,
-      data: buffer
+      data: arrayBuffer
     };
   };
 
@@ -429,7 +440,7 @@ const downloadScratch3 = async (projectData, zip, options) => {
   const costumes = flat(targets.map((t) => t.costumes || []));
   const sounds = flat(targets.map((t) => t.sounds || []));
   const assets = prepareAssets([...costumes, ...sounds]);
-  const filesToAdd = await Promise.all(assets.map(addFile));
+  const filesToAdd = (await Promise.all(assets.map(addFile))).filter(file => file !== null);
 
   const modifiedJSON = await storeProjectJSON(zip, 'sb3', projectData, options);
 

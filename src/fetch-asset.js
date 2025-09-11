@@ -1,13 +1,17 @@
 import * as crossFetch from 'cross-fetch';
 import {HTTPError} from './errors.js';
 
+// Wrapper around fetch() to make asset downloading more reliable.
+//  - Maximum number of concurrent fetch() is limited and queued. Chrome in particular
+//    tends to throw errors when you start too many fetch() at once.
+//  - Requests are retried with randomized backoff between attempts.
+//  - If an asset is determined to not exist, retries are cancelled.
+//  - Handles assets.scratch.mit.edu status code quirks.
+
+// Originally based on https://github.com/TurboWarp/scratch-storage/blob/develop/src/safer-fetch.js
+
 // define fetch so that in webpack, the `this` won't be the crossFetch module
 const fetch = crossFetch.fetch;
-
-// Based on https://github.com/TurboWarp/scratch-storage/blob/develop/src/safer-fetch.js
-
-// This throttles and retries fetch() to mitigate the effect of random network errors and
-// random browser errors (especially in Chrome)
 
 let currentFetches = 0;
 const queue = [];
@@ -26,11 +30,19 @@ const startNextFetch = ([resolve, url, options]) => {
   let attempts = 0;
 
   const attemptToFetch = () => fetch(url, options)
-    .then((r) => {
-      if (r.ok) {
-        return r.arrayBuffer()
+    .then((res) => {
+      if (res.ok) {
+        return res.arrayBuffer();
       }
-      throw new HTTPError(url, r.status);
+
+      // Don't retry if the asset doesn't exist.
+      // assets.scratch.mit.edu returns 503 instead of 404 for unknown assets for unknown reasons.
+      // eg. https://assets.scratch.mit.edu/00000000000000000000000000000000.png
+      if (res.status === 404 || res.status === 503) {
+        return null;
+      }
+
+      throw new HTTPError(url, res.status);
     })
     .then((buffer) => {
       finishedFetch();
@@ -85,9 +97,14 @@ const checkStartNextFetch = () => {
   }
 };
 
-const saferFetchAsArrayBuffer = (url, options) => new Promise((resolve) => {
+/**
+ * @param {string} url
+ * @param {RequestInit} options 
+ * @returns {Promise<ArrayBuffer|null>} ArrayBuffer if loaded. null if does not exist. Rejects if unexpected error.
+ */
+const fetchAsset = (url, options) => new Promise((resolve) => {
   queue.push([resolve, url, options]);
   checkStartNextFetch();
 });
 
-export default saferFetchAsArrayBuffer;
+export default fetchAsset;
