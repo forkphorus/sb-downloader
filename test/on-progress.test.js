@@ -43,7 +43,6 @@ test('progress events received in correct order', async () => {
   expect(allEvents.filter(i => i[0] === 'project')).toStrictEqual([
     ['project', 0, 1],
     ['project', 1, 1],
-    ['project', 1, 1],
   ]);
 
   // These are throttled so only first and last events are meant to be reliable

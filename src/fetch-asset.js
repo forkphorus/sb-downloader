@@ -1,4 +1,3 @@
-import * as crossFetch from 'cross-fetch';
 import {HTTPError} from './errors.js';
 
 // Wrapper around fetch() to make asset downloading more reliable.
@@ -9,9 +8,6 @@ import {HTTPError} from './errors.js';
 //  - Handles assets.scratch.mit.edu status code quirks.
 
 // Originally based on https://github.com/TurboWarp/scratch-storage/blob/develop/src/safer-fetch.js
-
-// define fetch so that in webpack, the `this` won't be the crossFetch module
-const fetch = crossFetch.fetch;
 
 let currentFetches = 0;
 const queue = [];

@@ -33,7 +33,6 @@
   },
   "dependencies": {
     "@turbowarp/json": "^0.1.2",
-    "cross-fetch": "^4.1.0",
     "jszip": "^3.10.1"
   },
   "devDependencies": {

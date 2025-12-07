@@ -1,13 +1,9 @@
 import JSZip from 'jszip';
-import * as crossFetch from 'cross-fetch';
 import * as ExtendedJSON from '@turbowarp/json';
 import {AbortError, CanNotAccessProjectError, HTTPError} from './errors.js';
 import fetchAsset from './fetch-asset.js';
 import fetchAsArrayBufferWithProgress from './fetch-with-progress.js';
 import environment from './environment.js';
-
-// define fetch so that in webpack, the `this` won't be the crossFetch module
-const fetch = crossFetch.fetch;
 
 /**
  * @typedef {'sb'|'sb2'|'sb3'} ProjectType
