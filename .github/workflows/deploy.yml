@@ -17,20 +17,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
-    - name: Setup GitHub Pages
-      id: pages
-      uses: actions/configure-pages@v5
+      uses: actions/checkout@v6
     - name: Install Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
-        node-version: 22
+        node-version: 24
     - name: Install dependencies
       run: npm ci
     - name: Build website
       run: npm run build
     - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
+      uses: actions/upload-pages-artifact@v4
       with:
         path: ./dist/
 
