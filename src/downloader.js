@@ -1,4 +1,4 @@
-import JSZip from 'jszip';
+import JSZip from '@turbowarp/jszip';
 import * as ExtendedJSON from '@turbowarp/json';
 import {AbortError, CanNotAccessProjectError, HTTPError} from './errors.js';
 import fetchAsset from './fetch-asset.js';

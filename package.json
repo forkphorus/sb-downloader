@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@turbowarp/json": "^0.1.2",
-    "jszip": "^3.10.1"
+    "@turbowarp/jszip": "^3.12.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.6",

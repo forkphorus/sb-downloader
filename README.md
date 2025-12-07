@@ -225,7 +225,7 @@ The standalone version loaded via `<script>` tag also re-exports some internal l
 ```html
 <script src="https://.../bundle-standalone.min.js"></script>
 <script>
-  // https://stuk.github.io/jszip/
+  // https://github.com/TurboWarp/jszip which is a fork of https://stuk.github.io/jszip/
   var JSZip = SBDL.JSZip;
 
   // https://www.npmjs.com/package/@turbowarp/json

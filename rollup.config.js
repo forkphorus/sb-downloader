@@ -7,7 +7,7 @@ import license from 'rollup-plugin-license';
 const packageJSONText = fs.readFileSync(path.join(import.meta.dirname, 'package.json'), 'utf-8');
 const packageJSON = JSON.parse(packageJSONText);
 
-const external = ['jszip', '@turbowarp/json'];
+const external = ['@turbowarp/jszip', '@turbowarp/json'];
 
 const headerPlugin = license({
   banner: {

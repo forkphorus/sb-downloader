@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import {expect, test, vi} from 'vitest';
-import * as JSZip from 'jszip';
+import * as JSZip from '@turbowarp/jszip';
 import * as SBDL from '../src/export-node.js';
 import {arrayBufferSerializer, getFixturePath} from './test-utilities';
 
