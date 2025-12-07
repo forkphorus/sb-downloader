@@ -224,6 +224,10 @@ const downloadScratch2 = async (projectData, zip, options) => {
   // In the offline editor they use separate integer file IDs for images and sounds.
   // We need the sb2 to use those integer file IDs, but the ones from the Scratch API don't have those, so we create them ourselves
 
+  /**
+   * @param {string} md5ext
+   * @returns {string}
+   */
   const getExtension = (md5ext) => md5ext.split('.')[1] || '';
 
   /**
@@ -309,14 +313,19 @@ const downloadScratch2 = async (projectData, zip, options) => {
     };
 
     for (const costume of costumes) {
-      costume.baseLayerID = assignCostumeId(costume.baseLayerMD5);
+      if (costume.baseLayerMD5) {
+        costume.baseLayerID = assignCostumeId(costume.baseLayerMD5);
+      }
+
       if (costume.textLayerMD5) {
         costume.textLayerID = assignCostumeId(costume.textLayerMD5);
       }
     }
 
     for (const sound of sounds) {
-      sound.soundID = assignSoundId(sound.md5);
+      if (sound.md5) {
+        sound.soundID = assignSoundId(sound.md5);
+      }
     }
 
     // Now we know what to download and where to store it.
@@ -332,7 +341,7 @@ const downloadScratch2 = async (projectData, zip, options) => {
   const sounds = flat(targets.map((i) => i.sounds || []));
   const filesToAdd = (await downloadAssets(costumes, sounds)).filter(i => i !== null);
 
-  // Project JSON is mutated during loading, so add it at the end.
+  // Project JSON may be mutated during loading, so add it at the end.
   const modifiedJSON = await storeProjectJSON(zip, 'sb2', projectData, options);
 
   // Add files to the zip at the end so the order will be consistent.
