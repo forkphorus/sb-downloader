@@ -1,0 +1,11 @@
+exports[`sb2 project from JSON 1`] = `
+{
+  "arrayBuffer": "ArrayBuffer [SHA-256 68431ea4a0fedc55580c98d6fb06a1419f447a424c69e85b041c9665feb8da45]",
+  "title": "",
+  "type": "sb2"
+}
+`;
+
+exports[`sb2 with missing assets 1`] = `
+ArrayBuffer [SHA-256 ac4eeee22d1eb9dd4aa5694880dd3c192eae58f9bef6c33f4233e2afa54be9fe]
+`;

@@ -1,13 +1,11 @@
-import {expect, test} from 'vitest';
-import fs from 'fs';
+import {test} from 'node:test';
+import fs from 'node:fs';
 import * as SBDL from '../src/export-node.js';
-import {getFixturePath, arrayBufferSerializer} from './test-utilities';
+import {getFixturePath} from './test-utilities.js';
 
-expect.addSnapshotSerializer(arrayBufferSerializer);
-
-test('option to disable compression', async () => {
+test('option to disable compression', async (t) => {
   const project = await SBDL.downloadProjectFromBuffer(fs.readFileSync(getFixturePath('minimal-sb3.json')), {
     compress: false
   });
-  expect(project).toMatchSnapshot();
+  t.assert.snapshot(project);
 });

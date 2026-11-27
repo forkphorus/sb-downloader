@@ -21,7 +21,7 @@
   "scripts": {
     "build": "rollup -c && tsc",
     "prepublishOnly": "npm run build",
-    "test": "vitest run",
+    "test": "node --test test/*.test.js",
     "watch": "rollup -c -w"
   },
   "bin": {
@@ -40,7 +40,6 @@
     "@types/node": "^24.3.1",
     "rollup": "^4.50.1",
     "rollup-plugin-license": "^3.6.0",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "typescript": "^5.9.2"
   }
 }

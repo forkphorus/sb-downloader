@@ -1,10 +1,9 @@
-import {expect, test} from 'vitest';
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
 import * as SBDL from '../src/export-node.js';
-import {arrayBufferSerializer} from './test-utilities';
+import './test-utilities.js';
 
-expect.addSnapshotSerializer(arrayBufferSerializer);
-
-test('progress events received in correct order', async () => {
+test('progress events received in correct order', {timeout: 30000}, async (t) => {
   const allEvents = [];
   const startedEventTypes = [];
   const finishedEventTypes = [];
@@ -12,7 +11,7 @@ test('progress events received in correct order', async () => {
     allEvents.push([type, loaded, total]);
 
     if (loaded === total) {
-      expect(startedEventTypes.includes(type)).toBe(true);
+      assert.equal(startedEventTypes.includes(type), true);
       if (finishedEventTypes[finishedEventTypes.length - 1] !== type) {
         finishedEventTypes.push(type);
       }
@@ -28,27 +27,27 @@ test('progress events received in correct order', async () => {
     onProgress
   });
 
-  expect(startedEventTypes).toStrictEqual(finishedEventTypes);
-  expect(startedEventTypes).toStrictEqual([
+  assert.deepEqual(startedEventTypes, finishedEventTypes);
+  assert.deepEqual(startedEventTypes, [
     'metadata',
     'project',
     'assets',
     'compress'
   ]);
 
-  expect(allEvents.filter(i => i[0] === 'metadata')).toStrictEqual([
+  assert.deepEqual(allEvents.filter(i => i[0] === 'metadata'), [
     ['metadata', 0, 1],
     ['metadata', 1, 1],
   ]);
-  expect(allEvents.filter(i => i[0] === 'project')).toStrictEqual([
+  assert.deepEqual(allEvents.filter(i => i[0] === 'project'), [
     ['project', 0, 1],
     ['project', 1, 1],
   ]);
 
   // These are throttled so only first and last events are meant to be reliable
   const assetEvents = allEvents.filter(i => i[0] === 'assets');
-  expect(assetEvents[0]).toStrictEqual(['assets', 0, 5]);
-  expect(assetEvents[assetEvents.length - 1]).toStrictEqual(['assets', 5, 5]);
+  assert.deepEqual(assetEvents[0], ['assets', 0, 5]);
+  assert.deepEqual(assetEvents[assetEvents.length - 1], ['assets', 5, 5]);
 
-  expect(project).toMatchSnapshot();
-}, 30000);
+  t.assert.snapshot(project);
+});
