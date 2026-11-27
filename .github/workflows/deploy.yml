@@ -24,8 +24,13 @@ jobs:
         node-version: 24
     - name: Install dependencies
       run: npm ci
-    - name: Build website
+    - name: Build
       run: npm run build
+    - name: Assemble website
+      run: |
+        mkdir -p dist/lib
+        cp index.html dist/
+        cp lib/bundle-standalone.js dist/lib/
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v4
       with:

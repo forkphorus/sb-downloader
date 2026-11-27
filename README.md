@@ -12,14 +12,11 @@ Used by the [TurboWarp Packager](https://packager.turbowarp.org/), [forkphorus p
 git clone https://github.com/forkphorus/sb-downloader.git
 cd sb-downloader
 npm ci
-# For development
-npm run dev
-# Run tests. Requires a decent internet connection.
-npm test
-# For production (output in `dist`)
 npm run build
-npm run preview
+npm test
 ```
+
+Open index.html in your browser to get the website.
 
 ## CLI
 

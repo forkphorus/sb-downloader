@@ -19,11 +19,10 @@
   "browser": "./lib/bundle-web.cjs",
   "types": "./lib/types/downloader.d.ts",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "prepublishOnly": "rollup -c && tsc",
-    "test": "vitest run"
+    "build": "rollup -c && tsc",
+    "prepublishOnly": "npm run build",
+    "test": "vitest run",
+    "watch": "rollup -c -w"
   },
   "bin": {
     "sbdl": "src/cli.js"
@@ -39,12 +38,9 @@
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@types/node": "^24.3.1",
-    "@vitejs/plugin-legacy": "^7.2.1",
     "rollup": "^4.50.1",
     "rollup-plugin-license": "^3.6.0",
-    "terser": "^5.44.0",
     "typescript": "^5.9.2",
-    "vite": "^7.1.5",
     "vitest": "^3.2.4"
   }
 }

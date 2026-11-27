@@ -359,11 +359,9 @@
       </p>
     </main>
 
-    <script type="module">
-      import JSZip from '@turbowarp/jszip';
-      import * as SBDL from './src/export-web.js';
-
-      window.SBDL = SBDL;
+    <script src="lib/bundle-standalone.js"></script>
+    <script>
+      const JSZip = SBDL.JSZip;
 
       /**
        * @param {string} text
