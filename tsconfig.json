@@ -8,6 +8,7 @@
     "allowJs": true,
     "declaration": true,
     "emitDeclarationOnly": true,
+    "skipLibCheck": true,
     "declarationDir": "./lib/types/",
     "rootDir": "./src/"
   },
